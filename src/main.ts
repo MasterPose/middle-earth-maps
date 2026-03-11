@@ -535,6 +535,7 @@ Promise.all(layersPromises).then((data) => Object.fromEntries(data)).then(async 
     map.fitBounds(bounds);
     map.setZoom(15.58);
     refreshPlaceMarkers();
+    changeTitle('');
 
     const searchQuery = url.searchParams.get('s');
     const placeQuery = url.searchParams.get('p');
