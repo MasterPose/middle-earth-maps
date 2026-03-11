@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
+
+    <meta property="og:title" content="Midde-Earth Maps: LotR interactive map" />
+    <meta property="og:description" content="Explore the Middle-Earth of Arda in an interactive and familiar way." />
+    <meta property="og:image" content="https://lotr.masterpose.dev/middle-earth-maps.png" />
+    <meta property="og:url" content="https://lotr.masterpose.dev" />
+
+    <link rel="preload" href="icons/waterfall.svg" as="image" type="image/svg+xml" />
+    <link rel="preload" href="icons/peaks.svg" as="image" type="image/svg+xml" />
+    <link rel="preload" href="icons/stone-bridge.svg" as="image" type="image/svg+xml" />
+    <link rel="preload" href="icons/position-marker.svg" as="image" type="image/svg+xml" />
+    <link rel="preload" href="icons/black-bridge.svg" as="image" type="image/svg+xml" />
+    <link rel="preload" href="icons/village.svg" as="image" type="image/svg+xml" />
+    <link rel="preload" href="icons/castle.svg" as="image" type="image/svg+xml" />
+    <link rel="preload" href="icons/ring.svg" as="image" type="image/svg+xml" />
+    <link rel="preload" href="images/places/notfound.png" as="image" type="image/svg+xml" />
+
+    <title>Midde-Earth Maps</title>
+</head>
+
+<body>
+    <h1 class="sr-only">Midde-Earth Maps: LoTR interactive map</h1>
+    <main id="app"></main>
+    <aside id="sidebar" class="hidden" style="display: none;">
+        <header>
+            <div class="title">
+                <h2>Minas Tirith</h2>
+                <p>Gondor</p>
+            </div>
+            <div class="picture">
+                <img src="images/places/notfound.png" alt="">
+            </div>
+        </header>
+        <section id="basic-data" aria-labelledby="basic-data-title">
+            <h3 id="basic-data-title">Basic Data</h3>
+            <p>Minas Tirith (S. 'Tower of the Guard') was a city of Gondor, originally called Minas Anor. From T.A. 1640 onwards it was the capital of the South-kingdom and the seat of its Kings and ruling Stewards. </p>
+
+            <a href="https://tolkiengateway.net/wiki/Minas_Tirith" target="_blank" rel="noreferer noopener">Learn more</a>
+        </section>
+
+        <section id="media" aria-labelledby="media-title">
+            <h3 id="media-title">Photos & videos</h3>
+            <div class="gallery">
+            </div>
+        </section>
+
+        <section id="also-known" aria-labelledby="also-known-title">
+            <h3 id="also-known-title">Also Known As</h3>
+            <ul>
+                <li>Minas Anor</li>
+                <li>Mundburg</li>
+            </ul>
+        </section>
+    </aside>
+    <div id="searchbar">
+        <form>
+            <input type="text" name="s" placeholder="Search in Middle-Earth Maps">
+            <button type="submit">
+                <img src="icons/magnifying-glass.svg" alt="">
+            </button>
+        </form>
+        <ul>
+
+        </ul>
+    </div>
+    <footer id="footer">
+        <nav>
+            <ul>
+                <li>
+                    <a href="https://github.com/MasterPose/middle-earth-maps" target="_blank" rel="noreferer noopener">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <title>GitHub</title>
+                            <path
+                                d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+                        </svg>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </footer>
+    <script type="module" src="./main.ts"></script>
+</body>
+
+</html>

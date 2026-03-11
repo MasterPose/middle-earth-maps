@@ -1,0 +1,80 @@
+import Papa from 'papaparse';
+
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
+import MiniSearch from 'minisearch';
+
+const CSV_PATH = join(import.meta.dirname, 'data/Location.csv');
+
+const IMAGE_DIR = 'images/places';
+const IMAGE_DIR_ABS = join(import.meta.dirname, '../public/', IMAGE_DIR);
+
+const LINE_TEXT_PATH = join(import.meta.dirname, '../public/data/line_text.geojson');
+const DATABASE_PATH = join(import.meta.dirname, '../public/db.json');
+const SEARCH_INDEX_PATH = join(import.meta.dirname, '../public/search.json');
+
+const lineTextDB = JSON.parse(readFileSync(LINE_TEXT_PATH, 'utf-8'));
+const locationCsvDB = Papa.parse(readFileSync(CSV_PATH, 'utf-8'), {
+    encoding: 'utf-8',
+    delimiter: ';',
+    quoteChar: '',
+    header: true
+}).data;
+
+const database = {};
+lineTextDB.features.forEach((v) => {
+    const props = v.properties;
+    const id = props.eventname;
+    const name = props.name_EN;
+
+    database[id] = {
+        id,
+        name,
+        zoom: props.zoom,
+    };
+});
+
+const parseQuotes = (v = '') => v.replace(/^"|"$/g, '').trim();
+const parseArray = (v = '') => parseQuotes(v).split(',').map((v) => parseQuotes(v)).filter((v) => v !== '');
+
+locationCsvDB.forEach(({ uniquename, name, altname, gatewaylink, age, area }) => {
+    const id = parseQuotes(uniquename);
+    const dataFromGeoJSON = database[id];
+
+    if (!dataFromGeoJSON) return;
+
+    const imagesPath = join(IMAGE_DIR_ABS, id);
+    let images = [];
+    let mainPicture = undefined;
+
+    if (existsSync(imagesPath)) {
+        images = readdirSync(imagesPath)
+            .map((v) => join(IMAGE_DIR, id, v).replace(/\\/g, '/'));
+        mainPicture = images[0];
+    }
+
+    const parsedAltnames = parseArray(altname).filter((v) => v !== dataFromGeoJSON.name);
+    const parsedRegions = parseArray(area).filter((v) => v !== 'Middle-earth');
+
+    database[id] = {
+        ...dataFromGeoJSON,
+        altname: parsedAltnames,
+        region: parsedRegions,
+        mainPicture,
+        images,
+        link: parseQuotes(gatewaylink),
+        searchAltname: parsedAltnames.join(' '),
+        searchRegion: parsedRegions.join(' '),
+    }
+})
+
+const miniSearch = new MiniSearch({
+    fields: ['name', 'searchAltname', 'searchRegion'],
+    storeFields: ['name', 'region']
+});
+miniSearch.addAll(Object.values(database));
+const searchIndex = miniSearch.toJSON();
+
+
+writeFileSync(DATABASE_PATH, JSON.stringify(database));
+writeFileSync(SEARCH_INDEX_PATH, JSON.stringify(searchIndex));

@@ -1,0 +1,424 @@
+@import 'leaflet/dist/leaflet.css';
+
+* {
+    scrollbar-width: thin;
+}
+
+/* google-sans-regular - latin */
+@font-face {
+    font-display: swap;
+    /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+    font-family: 'Google Sans';
+    font-style: normal;
+    font-weight: 400;
+    src: url('./fonts/google-sans-v67-latin-regular.woff2') format('woff2');
+    /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+/* google-sans-500 - latin */
+@font-face {
+    font-display: swap;
+    /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+    font-family: 'Google Sans';
+    font-style: normal;
+    font-weight: 500;
+    src: url('./fonts/google-sans-v67-latin-500.woff2') format('woff2');
+    /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+/* google-sans-600 - latin */
+@font-face {
+    font-display: swap;
+    /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+    font-family: 'Google Sans';
+    font-style: normal;
+    font-weight: 600;
+    src: url('./fonts/google-sans-v67-latin-600.woff2') format('woff2');
+    /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+/* google-sans-700 - latin */
+@font-face {
+    font-display: swap;
+    /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+    font-family: 'Google Sans';
+    font-style: normal;
+    font-weight: 700;
+    src: url('./fonts/google-sans-v67-latin-700.woff2') format('woff2');
+    /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+
+body {
+    padding: 0;
+    margin: 0;
+    display: flex;
+    background-color: #fff;
+    color: #1f1f1f;
+    font-size: 0.875rem;
+    font-family: "Google Sans", Roboto, Arial, sans-serif;
+}
+
+html,
+body,
+#app {
+    height: 100%;
+    width: 100vw;
+    overflow: hidden;
+}
+
+img {
+    display: inline-block;
+    width: 100%;
+}
+
+ul {
+    margin-top: 0;
+    padding-left: 1rem;
+}
+
+a {
+    color: #007b8b;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+#app {
+    background-color: #8ad8ec;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+.leaflet-div-icon {
+    background: none;
+    border: none;
+}
+
+.place-icon {
+    --place-size: 12px;
+    --place-color: #2f3034;
+    position: relative;
+    height: 100%;
+}
+
+.place-icon>div:first-child {
+    background-color: var(--place-color);
+    border-radius: 33% 33% 50% 50%;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.3);
+    border: 3px #fff solid;
+    padding: 2px;
+}
+
+.place-icon.active>div:first-child {
+    background: none;
+    box-shadow: none;
+    border: none;
+    padding: none;
+    padding: 0px;
+}
+
+.place-icon.active>div:first-child>.icon {
+    display: none;
+    width: 100%;
+}
+
+.place-icon>div:first-child>.selected-icon {
+    display: none;
+}
+
+.place-icon.active>div:first-child>.selected-icon {
+    display: block;
+}
+
+.place-icon.active>div>img {
+    width: 100%;
+}
+
+.place-icon>p:last-child {
+    --outline-color: #fff;
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    width: 100%;
+    margin: 0;
+    width: max-content;
+    transform: translateY(-50%);
+    font-size: var(--place-size);
+    text-shadow: -1px -1px 0 var(--outline-color), 1px -1px 0 var(--outline-color), -1px 1px 0 var(--outline-color), 1px 1px 0 var(--outline-color);
+    margin-left: 2px;
+    color: var(--place-color);
+}
+
+.place-icon:hover>p:last-child {
+    color: #2e8cff;
+}
+
+.place-icon.active>p:last-child {
+    color: #d89400;
+}
+
+.place-icon.without-icon>p:last-child {
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+}
+
+.leaflet-control-attribution {
+    font-family: "Google Sans", Roboto, Arial, sans-serif;
+    font-size: 10px;
+    color: #1f1f1f;
+    user-select: none;
+}
+
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+    user-select: none;
+    border: none;
+    box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+}
+
+.leaflet-touch .leaflet-bar a:hover {
+    background-color: #fff;
+}
+
+.leaflet-touch .leaflet-bar a:first-child {
+    color: #333;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.leaflet-touch .leaflet-bar a:last-child {
+    color: #333;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+#searchbar {
+    left: 0;
+    z-index: 501;
+    overflow: hidden;
+    right: 75%;
+    position: absolute;
+    isolation: isolate;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+    margin: 0.75rem 0.5rem;
+    border-radius: 1rem;
+}
+
+#searchbar.has-items {
+    border-bottom-left-radius: 1rem;
+    border-bottom-right-radius: 1rem;
+}
+
+#searchbar>form {
+    display: flex;
+    background-color: #fff;
+    overflow: hidden;
+}
+
+#searchbar.has-items>form {
+    border-bottom: 1px solid #efefef;
+}
+
+#searchbar>form>input {
+    border: none;
+    outline: none;
+    display: block;
+    /* width: 100%; */
+    flex: 1;
+    padding: 0.9rem 1rem;
+    color: #1f1f1f;
+    font-size: 15px;
+    font-family: "Google Sans", Roboto, Arial, sans-serif;
+}
+
+#searchbar>form>button {
+    border: none;
+    width: 3rem;
+    cursor: pointer;
+    background: none;
+    padding-right: 1rem;
+    padding-left: 0.5rem;
+}
+
+#searchbar.has-items>ul {
+    display: block;
+}
+
+#searchbar>ul {
+    display: none;
+    position: relative;
+    list-style: none;
+    background-color: #fff;
+    padding: 0;
+    padding-bottom: 0.5rem;
+    border-bottom-left-radius: 1rem;
+    border-bottom-right-radius: 1rem;
+    z-index: -1;
+    margin: 0;
+}
+
+#searchbar>ul li {
+    font-weight: 400px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    color: #5e5e5e;
+}
+
+#searchbar>ul li:hover {
+    background-color: #ededed;
+}
+
+#sidebar {
+    z-index: 500;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 75%;
+    background-color: #fff;
+    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.5);
+    overflow-y: auto;
+}
+
+@media (max-width: 1200px) {
+    #sidebar {
+        right: 50%;
+    }
+
+    #searchbar {
+        right: 50%;
+    }
+}
+
+@media (max-width: 600px) {
+    #sidebar {
+        right: 33%;
+    }
+
+    #searchbar {
+        right: 33%;
+    }
+}
+
+.hidden {
+    display: none !important;
+}
+
+#sidebar>:not(:last-child) {
+    border-bottom: 1px #e3e3e3 solid;
+}
+
+#sidebar header {
+    display: flex;
+    flex-direction: column-reverse;
+}
+
+#sidebar header>.title {
+    padding: 16px 24px;
+}
+
+#sidebar header>.title>h2 {
+    font-size: 1.375rem;
+    margin: 0;
+    font-weight: 400;
+}
+
+#sidebar header>.title>p {
+    margin-top: 6px;
+    margin-bottom: 0;
+    color: #5e5e5e;
+}
+
+#sidebar header>.title>p:empty {
+    display: none;
+}
+
+#sidebar header>.picture {
+    overflow: hidden;
+    height: 240px;
+}
+
+#sidebar header>.picture>img {
+    object-fit: cover;
+    object-position: center;
+    height: 100%;
+    user-select: none;
+}
+
+#sidebar section {
+    padding: 16px 24px;
+}
+
+#sidebar section>h3 {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-top: 0;
+}
+
+#media .gallery {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+#media .gallery>.item {
+    display: block;
+    position: relative;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    object-fit: cover;
+    height: 160px;
+}
+
+#media .gallery>.item>img {
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    user-select: none;
+}
+
+#media .gallery>.item>.title {
+    position: absolute;
+    margin: 0;
+    padding: 48px 12px 12px 12px;
+    color: #fff;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: linear-gradient(to top, black, rgba(0, 0, 0, 0));
+}
+
+#footer {
+    z-index: 499;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+}
+
+#footer nav ul {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 0.2rem 0.5rem;
+}
+
+#footer nav ul li a {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+}
+
+#footer nav ul li a>svg {
+    fill: #fff;
+}
