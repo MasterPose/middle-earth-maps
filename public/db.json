@@ -2655,8 +2655,12 @@
       "region":[
          "Eriador"
       ],
+	  
+      "mainPicture":"images/places/Rivendell/1_Rivendell.jpg",
       "images":[
-         
+         "images/places/Rivendell/1_Rivendell.jpg",
+         "images/places/Rivendell/2_Rivendell2.jpg",
+         "images/places/Rivendell/3_Rivendell_MichaelGillett.jpg",
       ],
       "link":"http://tolkiengateway.net/wiki/Rivendell",
       "searchAltname":"Imladris the Last Homely House",
@@ -4430,9 +4434,9 @@
       ],
       "mainPicture":"images/places/Argonath/Argonath_LotROnline.webp",
       "images":[
-         "images/places/Argonath/Argonath_LotROnline.webp",
-         "images/places/Argonath/Argonath.jpg",
-         "images/places/Argonath/Argonath_RafaelFalconi.jpg",
+         "images/places/Argonath/1_Argonath_LotROnline.webp",
+         "images/places/Argonath/2_Argonath.jpg",
+         "images/places/Argonath/3_Argonath_RafaelFalconi.jpg",
       ],
       "link":"http://tolkiengateway.net/wiki/Argonath",
       "searchAltname":"Gate of Kings Pillars of the Kings",
