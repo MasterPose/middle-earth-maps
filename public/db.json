@@ -3683,8 +3683,11 @@
       "region":[
          "Eriador"
       ],
+	  "mainPicture":"images/places/Weathertop/1_Weathertop_Skyrim.jpg",
       "images":[
-         
+         "images/places/Weathertop/1_Weathertop_Skyrim.jpg",
+         "images/places/Weathertop/2_Weathertop_LotROnline.jpg",
+         "images/places/Weathertop/3_Weathertop_LotROnline.jpg",
       ],
       "link":"http://tolkiengateway.net/wiki/Weathertop",
       "searchAltname":"Amon Sûl",
