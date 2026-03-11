@@ -16,13 +16,15 @@
     <meta property="og:title" content="Middle-Earth Maps: LotR interactive map" />
     <meta property="og:description" content="Explore Tolkien's Middle-Earth of Arda in an interactive and familiar user-interface. Interact & learn visually about The Lord of the Rings world." />
 
-    <meta property="og:image" content="https://lotr.masterpose.dev/middle-earth-maps.jpg" />
+    <meta name="image" property="og:image" content="https://lotr.masterpose.dev/middle-earth-maps.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="627" />
     <meta property="og:image:type" content="image/jpeg" />
 
     <meta property="og:url" content="https://lotr.masterpose.dev" />
     <meta property="og:type" content="website" />
+
+    <meta name="author" content="Master Pose">
 
     <link rel="preload" href="icons/waterfall.svg" as="image" type="image/svg+xml" />
     <link rel="preload" href="icons/peaks.svg" as="image" type="image/svg+xml" />
@@ -32,11 +34,13 @@
     <link rel="preload" href="icons/village.svg" as="image" type="image/svg+xml" />
     <link rel="preload" href="icons/castle.svg" as="image" type="image/svg+xml" />
     <link rel="preload" href="icons/ring.svg" as="image" type="image/svg+xml" />
-    <link rel="preload" href="images/places/notfound.png" as="image" type="image/svg+xml" />
+    <link rel="preload" href="images/places/notfound.png" as="image" type="image/png" />
 </head>
 
 <body style="background-color: #8ad8ec;">
     <h1 class="sr-only" style="display: none;">Middle-Earth Maps: LoTR interactive map</h1>
+    <img src="middle-earth-maps.jpg" class="sr-only" style="display: none;" alt="Main cover for Middle-Earth Maps web application">
+
     <main id="app"></main>
     <aside id="sidebar" class="hidden" style="display: none;">
         <header>
