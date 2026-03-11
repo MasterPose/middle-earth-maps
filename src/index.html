@@ -8,14 +8,21 @@
     <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
 
     <title>Middle-Earth Maps: LotR interactive map</title>
-    <meta name="description" content="Explore the Middle-Earth of Arda in an interactive and familiar way.">
+    <meta name="description" content="Explore Tolkien's Middle-Earth of Arda in an interactive and familiar user-interface. Interact & learn visually about The Lord of the Rings world.">
 
+    <link rel="canonical" href="https://lotr.masterpose.dev/" />
     <meta name=”robots” content="index, follow">
 
     <meta property="og:title" content="Middle-Earth Maps: LotR interactive map" />
-    <meta property="og:description" content="Explore the Middle-Earth of Arda in an interactive and familiar way." />
-    <meta property="og:image" content="https://lotr.masterpose.dev/middle-earth-maps.png" />
+    <meta property="og:description" content="Explore Tolkien's Middle-Earth of Arda in an interactive and familiar user-interface. Interact & learn visually about The Lord of the Rings world." />
+
+    <meta property="og:image" content="https://lotr.masterpose.dev/middle-earth-maps.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="627" />
+    <meta property="og:image:type" content="image/jpeg" />
+
     <meta property="og:url" content="https://lotr.masterpose.dev" />
+    <meta property="og:type" content="website" />
 
     <link rel="preload" href="icons/waterfall.svg" as="image" type="image/svg+xml" />
     <link rel="preload" href="icons/peaks.svg" as="image" type="image/svg+xml" />
@@ -28,24 +35,24 @@
     <link rel="preload" href="images/places/notfound.png" as="image" type="image/svg+xml" />
 </head>
 
-<body>
-    <h1 class="sr-only">Middle-Earth Maps: LoTR interactive map</h1>
+<body style="background-color: #8ad8ec;">
+    <h1 class="sr-only" style="display: none;">Middle-Earth Maps: LoTR interactive map</h1>
     <main id="app"></main>
     <aside id="sidebar" class="hidden" style="display: none;">
         <header>
             <div class="title">
-                <h2>Minas Tirith</h2>
-                <p>Gondor</p>
+                <h2>A Google Maps-inspired Middle-Earth interactive web app</h2>
+                <p>With this interactive map you can learn about J.R.R Tolkien's Middle-Earth. The map focuses on The Third Age both on canon and non-canon places and events from all media from Lord of the Rings such as videogames</p>
             </div>
             <div class="picture">
                 <img src="images/places/notfound.png" alt="">
             </div>
         </header>
         <section id="basic-data" aria-labelledby="basic-data-title">
-            <h3 id="basic-data-title">Basic Data</h3>
-            <p>Minas Tirith (S. 'Tower of the Guard') was a city of Gondor, originally called Minas Anor. From T.A. 1640 onwards it was the capital of the South-kingdom and the seat of its Kings and ruling Stewards. </p>
+            <h3 id="basic-data-title">About map</h3>
+            <p>This map was made for Master Pose by Luan Himmlisch.</p>
 
-            <a href="https://tolkiengateway.net/wiki/Minas_Tirith" target="_blank" rel="noreferer noopener">Learn more</a>
+            <a href="#" target="_blank" rel="noreferer noopener">Learn more</a>
         </section>
 
         <section id="media" aria-labelledby="media-title">
@@ -57,15 +64,14 @@
         <section id="also-known" aria-labelledby="also-known-title">
             <h3 id="also-known-title">Also Known As</h3>
             <ul>
-                <li>Minas Anor</li>
-                <li>Mundburg</li>
             </ul>
         </section>
     </aside>
-    <div id="searchbar">
+    <div id="searchbar" style="display: none;">
         <form>
             <input type="text" name="s" placeholder="Search in Middle-Earth Maps">
             <button type="submit">
+                <span class="sr-only">Search</span>
                 <img src="icons/magnifying-glass.svg" alt="">
             </button>
         </form>
@@ -73,7 +79,7 @@
 
         </ul>
     </div>
-    <footer id="footer">
+    <footer id="footer" style="display: none;">
         <nav>
             <ul>
                 <li>

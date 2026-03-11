@@ -2,7 +2,7 @@
 
 A Google Maps-inspired Middle-Earth interactive web app.
 
-![](./public/middle-earth-maps.png)
+![](./public/middle-earth-maps.jpg)
 
 ## Todo
 

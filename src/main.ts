@@ -12,6 +12,7 @@ const $sidebarRegion = $sidebar.querySelector<HTMLHeadingElement>('header>.title
 const $sidebarMainPictureImage = $sidebar.querySelector<HTMLImageElement>('.picture>img')!;
 
 // const $sidebarData = $sidebar.querySelector<HTMLDivElement>('#basic-data')!;
+const $sidebarDataTitle = $sidebar.querySelector<HTMLParagraphElement>('#basic-data-title')!;
 const $sidebarDataDescription = $sidebar.querySelector<HTMLParagraphElement>('#basic-data>p')!;
 const $sidebarDataLearnMore = $sidebar.querySelector<HTMLAnchorElement>('#basic-data>a')!;
 
@@ -26,7 +27,11 @@ const $seachbarForm = $seachbar.querySelector<HTMLFormElement>('form')!;
 const $seachbarFormInput = $seachbarForm.querySelector<HTMLInputElement>('input')!;
 const $seachbarList = $seachbar.querySelector<HTMLUListElement>('ul')!;
 
+const $footer = document.querySelector<HTMLDivElement>('#footer')!;
+
 $sidebar.style.display = '';
+$seachbar.style.display = '';
+$footer.style.display = '';
 
 const ZOOM_MAX = 22;
 const ZOOM_MIN = 15.58;
@@ -218,6 +223,8 @@ function showSidebar(id?: string) {
     } else {
         $sidebarMainPictureImage.src = 'images/places/notfound.png';
     }
+
+    $sidebarDataTitle.innerText = 'Basic Data';
 
     if (description) {
         $sidebarDataDescription.classList.remove('hidden');
