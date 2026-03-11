@@ -3324,8 +3324,10 @@
       "region":[
          "Arnor"
       ],
+	  "mainPicture":"images/places/Bree/1_Bree_LotROnline.jpg",
       "images":[
-         
+         "images/places/Bree/1_Bree_LotROnline.jpg",
+		 "images/places/Bree/2_BreeGates_LotROnline.jpg"
       ],
       "link":"http://tolkiengateway.net/wiki/Bree",
       "searchAltname":"",
