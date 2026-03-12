@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import Papa from 'papaparse';
 
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
@@ -12,6 +14,7 @@ const IMAGE_DIR_ABS = join(import.meta.dirname, '../public/', IMAGE_DIR);
 const LINE_TEXT_PATH = join(import.meta.dirname, '../public/data/line_text.geojson');
 const DATABASE_PATH = join(import.meta.dirname, '../public/db.json');
 const SEARCH_INDEX_PATH = join(import.meta.dirname, '../public/search.json');
+const ID_LIST_PATH = join(import.meta.dirname, '../public/ids.txt');
 
 const lineTextDB = JSON.parse(readFileSync(LINE_TEXT_PATH, 'utf-8'));
 const locationCsvDB = Papa.parse(readFileSync(CSV_PATH, 'utf-8'), {
@@ -77,4 +80,5 @@ const searchIndex = miniSearch.toJSON();
 
 
 writeFileSync(DATABASE_PATH, JSON.stringify(database));
+writeFileSync(ID_LIST_PATH, Object.keys(database).join('\n'));
 writeFileSync(SEARCH_INDEX_PATH, JSON.stringify(searchIndex));
