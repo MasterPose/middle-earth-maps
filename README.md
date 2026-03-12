@@ -13,10 +13,11 @@ A Google Maps-inspired Middle-Earth interactive web app.
 
 You can help by adding images of places to `public/images/places/`:
 
-1. You need to create a subfolder with the place id (Check the IDs [here](./public/db.json)).
+1. You need to create a subfolder with the place id (Check the [ids.txt](./public/ids.txt)).
 2. Add a descriptive name to the image you attach.
 3. Use underscores instead of spaces for the name.
 4. Add a number prefix to the name, to control the order of which the images are shown.
+5. Don't edit `public/db.json`, this file is generated using `bin/generatePlaceDatabase.js`. You can run the script, but I will run it for you if you do a PR.
 
 Example: `public/images/places/DoorsOfDurin/2_LEGO_game_depiction.webp`.
 
