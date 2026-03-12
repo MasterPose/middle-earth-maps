@@ -6,7 +6,7 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import MiniSearch from 'minisearch';
 
-const CSV_PATH = join(import.meta.dirname, 'data/Location.csv');
+const CSV_PATH = join(import.meta.dirname, '../src/data/Location.csv');
 
 const IMAGE_DIR = 'images/places';
 const IMAGE_DIR_ABS = join(import.meta.dirname, '../public/', IMAGE_DIR);
