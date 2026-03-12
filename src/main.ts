@@ -46,6 +46,17 @@ const map = L.map($app, {
 });
 map.attributionControl.setPrefix('Made using Leaflet. Map data by Arda Maps. Middle-Earth Maps is not affiliated with the aforementioned, Middle-Earth Enterprises, the Tolkien State nor Google Maps.');
 
+const SocialControl = L.Control.extend({
+    onAdd: function () {
+        const div = L.DomUtil.create('div');
+        div.appendChild($footer)
+        return div;
+    },
+    onRemove: function () { }
+});
+
+(new SocialControl({ position: 'bottomleft' })).addTo(map);
+
 let miniSearch: MiniSearch;
 let lastSearchTerm: string;
 
@@ -378,9 +389,12 @@ const PlaceMarker = L.Marker.extend({
 
 function refreshPlaceMarkers() {
     const zoom = map.getZoom();
+    const width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+    const deviceZoomExtra = width < 800 ? 0.25 : 0;
+
     allPlaceMarkers.forEach((marker, id) => {
         // @ts-expect-error
-        if (zoom >= marker.options.minZoom) {
+        if (zoom >= marker.options.minZoom - deviceZoomExtra) {
             marker.addTo(map)
         } else {
             if (id === sidebarSelectedID) return;

@@ -183,6 +183,23 @@ a {
     user-select: none;
 }
 
+@media (max-width: 800px) {
+    .leaflet-control-attribution {
+        padding: 0;
+        font-size: 9px;
+    }
+
+    .leaflet-bottom.leaflet-left {
+        z-index: 1001;
+    }
+}
+
+@media (max-width: 600px) {
+    .leaflet-control-attribution {
+        font-size: 8px;
+    }
+}
+
 .leaflet-touch .leaflet-control-layers,
 .leaflet-touch .leaflet-bar {
     user-select: none;
@@ -311,7 +328,7 @@ a {
     }
 
     #searchbar {
-        right: 33%;
+        right: 0%;
     }
 }
 
@@ -401,13 +418,6 @@ a {
     right: 0;
     bottom: 0;
     background-image: linear-gradient(to top, black, rgba(0, 0, 0, 0));
-}
-
-#footer {
-    z-index: 499;
-    position: absolute;
-    left: 0;
-    bottom: 0;
 }
 
 #footer nav ul {
