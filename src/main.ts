@@ -1,4 +1,4 @@
-import type { Feature, GeometryObject, Point } from 'geojson';
+import type { Feature, Geometry, GeometryObject, Point } from 'geojson';
 import * as L from 'leaflet';
 import './style.css'
 import MiniSearch from 'minisearch';
@@ -177,11 +177,19 @@ function showSidebar(id?: string) {
             prevMarkerEl.classList.remove('active');
             // @ts-expect-error
             prevMarker.setZIndexOffset(prevMarker.options.originalZIndex)
+
+            const regionLayer = prevMarker.feature?.properties.regionLayer as L.Polygon | undefined;
+            if (regionLayer) regionLayer.setStyle(STYLE_TRANSPARENT);
         }
         if (curMarker) {
             const curMarkerEl = (curMarker.getElement() ?? curMarker.addTo(map).getElement())?.firstElementChild;
             curMarkerEl?.classList.add('active');
             curMarker.setZIndexOffset(9999);
+
+            const regionLayer = curMarker.feature?.properties.regionLayer as L.Polygon | undefined;
+            if (regionLayer) {
+                regionLayer.setStyle(STYLE_REGION);
+            }
         }
 
         refreshPlaceMarkers();
@@ -291,7 +299,7 @@ type PLACE_TYPE = keyof typeof PLACE_CONFIG;
 
 const PlaceMarker = L.Marker.extend({
     initialize: function (
-        feature: Feature<Point, any>,
+        feature: Feature<Geometry, any>,
         coords: L.LatLng,
         opts: L.MarkerOptions = {},
     ) {
@@ -306,11 +314,15 @@ const PlaceMarker = L.Marker.extend({
             zoom,
         } = getPlaceInfo(id, type);
         const withoutIcon = [
-            'point_city'
+            'point_city',
+            'poly_region'
         ].includes(type)
 
         const size = withoutIcon ? Math.max(featureProps.size, 1) : featureProps.size || 1;
         const minZoom: number = Math.min(ZOOM_MIN - 1 + zoom - (size / 2), 19);
+
+        this.feature = feature;
+        const region = feature.properties.regionLayer;
 
         let html: string
         let zIndex: number = withoutIcon ? 998 - (3 - size) : 0;
@@ -327,10 +339,9 @@ const PlaceMarker = L.Marker.extend({
         html += `<p>${name}</p>`;
         html += `</div>`;
 
-
         opts.icon = L.divIcon({
             html,
-            iconSize: [32, 32]
+            iconSize: [26, 26]
         });
 
         // @ts-expect-error
@@ -350,11 +361,20 @@ const PlaceMarker = L.Marker.extend({
         this.addEventListener('click', () => {
             showSidebar(id);
         });
+        this.addEventListener('dblclick', () => {
+            showSidebar(id);
+
+            map.fitBounds(
+                region ? region.getBounds() : L.latLngBounds([this.getLatLng()]), {
+                padding: [50, 50],
+                maxZoom: 20
+            });
+        })
 
         this.setZIndexOffset(zIndex);
         allPlaceMarkers.set(id, this);
     }
-}) as unknown as new (feature: Feature<Point, any>, coords: L.LatLng, opts?: L.MarkerOptions) => L.Marker;
+}) as unknown as new (feature: Feature<Geometry, any>, coords: L.LatLng, opts?: L.MarkerOptions) => L.Marker;
 
 function refreshPlaceMarkers() {
     const zoom = map.getZoom();
@@ -409,6 +429,14 @@ const STYLE_VEGETATION: L.PathOptions = {
     fillOpacity: 0.5,
     color: '#9ce9bc',
 }
+
+const STYLE_REGION: L.PathOptions = {
+    stroke: true,
+    fill: false,
+    weight: 2,
+    dashArray: [4],
+    color: '#ed5f53'
+}
 const STYLE_TRANSPARENT: L.PathOptions = {
     stroke: false,
     fill: false,
@@ -436,9 +464,22 @@ const layersOpts: Record<string, L.GeoJSONOptions | undefined> = {
     poly_outline: {
         style: {
             stroke: false,
-            fillColor: '#d3f8e2',
+            fillColor: '#d0f6e0',
             fillOpacity: 1,
         }
+    },
+    poly_moor: {
+        style: STYLE_VEGETATION
+    },
+    poly_highland: {
+        style: {
+            stroke: false,
+            fillColor: '#f5f0e5',
+            fillOpacity: 1,
+        }
+    },
+    poly_forest: {
+        style: STYLE_VEGETATION
     },
     poly_mountainlow: {
         style: {
@@ -453,12 +494,6 @@ const layersOpts: Record<string, L.GeoJSONOptions | undefined> = {
             stroke: false,
             fillOpacity: 0.06,
         }
-    },
-    poly_moor: {
-        style: STYLE_VEGETATION
-    },
-    poly_forest: {
-        style: STYLE_VEGETATION
     },
     poly_lake: {
         style: STYLE_WATER
@@ -488,10 +523,30 @@ const layersOpts: Record<string, L.GeoJSONOptions | undefined> = {
         pointToLayer
     },
     point_city: {
-        pointToLayer
+        pointToLayer(feature, latlng) {
+            const marker = new PlaceMarker(feature, latlng);
+            marker.once('add', () => {
+                feature.properties.regionLayer = L.circle(latlng, {
+                    ...STYLE_TRANSPARENT,
+                    radius: Math.max(feature.properties.size * 5, 2)
+                }).addTo(map);
+            })
+            return marker;
+        },
     },
     point_waterfall: {
         pointToLayer
+    },
+    poly_region: {
+        style: STYLE_TRANSPARENT,
+        onEachFeature(feature, layer) {
+            feature.properties.size = 3;
+            feature.properties.regionLayer = layer;
+
+            layer.once('add', () => {
+                new PlaceMarker(feature, (layer as L.Polygon).getCenter())
+            })
+        },
     },
 }
 
