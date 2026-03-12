@@ -112,11 +112,15 @@ a {
 }
 
 .place-icon>div:first-child {
+    display: flex;
+    justify-items: center;
+    align-items: center;
+    height: 100%;
     background-color: var(--place-color);
     border-radius: 33% 33% 50% 50%;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.3);
-    border: 3px #fff solid;
-    padding: 2px;
+    border: 2px #fff solid;
+    padding: 0 2px;
 }
 
 .place-icon.active>div:first-child {
