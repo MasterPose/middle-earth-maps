@@ -20,7 +20,6 @@ const lineTextDB = JSON.parse(readFileSync(LINE_TEXT_PATH, 'utf-8'));
 const locationCsvDB = Papa.parse(readFileSync(CSV_PATH, 'utf-8'), {
     encoding: 'utf-8',
     delimiter: ';',
-    quoteChar: '',
     header: true
 }).data;
 
@@ -28,20 +27,17 @@ const database = {};
 lineTextDB.features.forEach((v) => {
     const props = v.properties;
     const id = props.eventname;
-    const name = props.name_EN;
 
     database[id] = {
         id,
-        name,
         zoom: props.zoom,
     };
 });
 
-const parseQuotes = (v = '') => v.replace(/^"|"$/g, '').trim();
-const parseArray = (v = '') => parseQuotes(v).split(',').map((v) => parseQuotes(v)).filter((v) => v !== '');
+const parseArray = (v = '') => v.trim().split(',').map((v) => v.trim()).filter((v) => v !== '');
 
-locationCsvDB.forEach(({ uniquename, name, altname, gatewaylink, age, area }) => {
-    const id = parseQuotes(uniquename);
+locationCsvDB.forEach(({ uniquename, name, altname, gatewaylink, area }) => {
+    const id = uniquename;
     const dataFromGeoJSON = database[id];
 
     if (!dataFromGeoJSON) return;
@@ -60,12 +56,14 @@ locationCsvDB.forEach(({ uniquename, name, altname, gatewaylink, age, area }) =>
     const parsedRegions = parseArray(area).filter((v) => v !== 'Middle-earth');
 
     database[id] = {
-        ...dataFromGeoJSON,
+        id: dataFromGeoJSON.id,
+        name: name,
+        zoom: dataFromGeoJSON.zoom,
         altname: parsedAltnames,
         region: parsedRegions,
         mainPicture,
         images,
-        link: parseQuotes(gatewaylink),
+        link: gatewaylink,
         searchAltname: parsedAltnames.join(' '),
         searchRegion: parsedRegions.join(' '),
     }
