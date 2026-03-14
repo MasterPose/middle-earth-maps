@@ -99,7 +99,7 @@ function search(term: string) {
     if (result.length) {
         $seachbar.classList.add('has-items');
 
-        $seachbarList.innerHTML = result.map((v) => `<li data-id="${v.id}">${v.name}</li>`).join('');
+        $seachbarList.innerHTML = result.map((v) => `<li data-id="${v.id}">${v.searchname}</li>`).join('');
     } else {
         $seachbar.classList.remove('has-items');
     }
@@ -226,7 +226,7 @@ function showSidebar(id?: string) {
 
     $sidebar.classList.remove('hidden');
     $sidebarName.innerText = name;
-    $seachbarFormInput.value = name;
+    $seachbarFormInput.value = info.searchname;
 
     changeTitle(name);
 
@@ -329,8 +329,11 @@ const PlaceMarker = L.Marker.extend({
             'poly_region'
         ].includes(type)
 
-        const size = withoutIcon ? Math.max(featureProps.size, 1) : featureProps.size || 1;
-        const minZoom: number = Math.min(ZOOM_MIN - 1 + zoom - (size / 2), 19);
+        const size = withoutIcon
+            ? Math.max(featureProps.size ?? 2, 2)
+            : (featureProps.size ?? 0);
+
+        const minZoom: number = Math.min(ZOOM_MIN + zoom - Math.min(size, 2), 19);
 
         this.feature = feature;
         const region = feature.properties.regionLayer;

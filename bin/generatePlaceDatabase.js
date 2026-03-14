@@ -16,7 +16,6 @@ const DATABASE_PATH = join(import.meta.dirname, '../public/db.json');
 const SEARCH_INDEX_PATH = join(import.meta.dirname, '../public/search.json');
 const ID_LIST_PATH = join(import.meta.dirname, '../public/ids.txt');
 
-const lineTextDB = JSON.parse(readFileSync(LINE_TEXT_PATH, 'utf-8'));
 const locationCsvDB = Papa.parse(readFileSync(CSV_PATH, 'utf-8'), {
     encoding: 'utf-8',
     delimiter: ';',
@@ -24,19 +23,21 @@ const locationCsvDB = Papa.parse(readFileSync(CSV_PATH, 'utf-8'), {
 }).data;
 
 const database = {};
-lineTextDB.features.forEach((v) => {
-    const props = v.properties;
-    const id = props.eventname;
-
-    database[id] = {
-        id,
-        zoom: props.zoom,
-    };
-});
+[
+    'line_text.geojson',
+    'poly_region.geojson',
+    'point_city.geojson'
+].map((v) => join(import.meta.dirname, '../public/data/', v))
+    .map((v) => readFileSync(v, 'utf-8'))
+    .map((v) => JSON.parse(v))
+    .forEach((v) => v.features.forEach((v) => database[v.properties.eventname] = {
+        id: v.properties.eventname,
+        zoom: v.properties.zoom,
+    }));
 
 const parseArray = (v = '') => v.trim().split(',').map((v) => v.trim()).filter((v) => v !== '');
 
-locationCsvDB.forEach(({ uniquename, name, altname, gatewaylink, area }) => {
+locationCsvDB.forEach(({ uniquename, name, searchname, significance, altname, gatewaylink, area }) => {
     const id = uniquename;
     const dataFromGeoJSON = database[id];
 
@@ -58,7 +59,8 @@ locationCsvDB.forEach(({ uniquename, name, altname, gatewaylink, area }) => {
     database[id] = {
         id: dataFromGeoJSON.id,
         name: name,
-        zoom: dataFromGeoJSON.zoom,
+        searchname,
+        zoom: dataFromGeoJSON.zoom || Math.max((8 - significance) / 2, 2),
         altname: parsedAltnames,
         region: parsedRegions,
         mainPicture,
@@ -71,7 +73,7 @@ locationCsvDB.forEach(({ uniquename, name, altname, gatewaylink, area }) => {
 
 const miniSearch = new MiniSearch({
     fields: ['name', 'searchAltname', 'searchRegion'],
-    storeFields: ['name', 'region']
+    storeFields: ['searchname', 'region']
 });
 miniSearch.addAll(Object.values(database));
 const searchIndex = miniSearch.toJSON();

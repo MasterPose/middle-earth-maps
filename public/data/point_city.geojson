@@ -8,7 +8,7 @@
 { "type": "Feature", "properties": { "eventname": "Bucklebury", "zoom": 4, "size": 0 }, "geometry": { "type": "Point", "coordinates": [ 0.031108122267999, -0.010492319506212 ] } },
 { "type": "Feature", "properties": { "eventname": "Standelf", "zoom": 4, "size": 0 }, "geometry": { "type": "Point", "coordinates": [ 0.031133276331573, -0.010582380639216 ] } },
 { "type": "Feature", "properties": { "eventname": "Haysend", "zoom": 4, "size": 0 }, "geometry": { "type": "Point", "coordinates": [ 0.031133028637825, -0.010633263212277 ] } },
-{ "type": "Feature", "properties": { "eventname": "Bree", "zoom": 3, "size": 2 }, "geometry": { "type": "Point", "coordinates": [ 0.031598006128165, -0.010255052762776 ] } },
+{ "type": "Feature", "properties": { "eventname": "Bree", "zoom": 4, "size": 3 }, "geometry": { "type": "Point", "coordinates": [ 0.031598006128165, -0.010255052762776 ] } },
 { "type": "Feature", "properties": { "eventname": "CarasGaladhon", "zoom": 4, "size": 2 }, "geometry": { "type": "Point", "coordinates": [ 0.036329199120258, -0.013062311664636 ] } },
 { "type": "Feature", "properties": { "eventname": "GoblinTown", "zoom": 4, "size": 2 }, "geometry": { "type": "Point", "coordinates": [ 0.036360300225901, -0.009762921817009 ] } },
 { "type": "Feature", "properties": { "eventname": "FornostErain", "zoom": 4, "size": 1 }, "geometry": { "type": "Point", "coordinates": [ 0.031482900422968, -0.009159216057391 ] } },
