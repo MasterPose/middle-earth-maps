@@ -24,7 +24,7 @@ export default defineConfig({
             }
         },
         rollupOptions: {
-            treeshake: 'smallest',
+            treeshake: 'recommended',
         }
     },
     plugins: [

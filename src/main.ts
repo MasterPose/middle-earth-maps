@@ -5,11 +5,10 @@ import MiniSearch from 'minisearch';
 import interact from 'interactjs';
 import domToImage from 'dom-to-image-more';
 
-import './vendor/pannellum.js';
-import './vendor/pannellum.css';
+import 'pannellum';
+import 'pannellum/src/css/pannellum.css';
 
 import './vendor/Leaflet.PointInPolygon.js';
-
 
 const $app = document.querySelector<HTMLDivElement>('#app')!;
 const $sidebar = document.querySelector<HTMLDivElement>('#sidebar')!;

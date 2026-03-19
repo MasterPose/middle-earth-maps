@@ -26,6 +26,7 @@
         "interactjs": "^1.10.27",
         "leaflet": "^1.9.4",
         "minisearch": "^7.2.0",
+        "pannellum": "^2.5.7",
         "shpjs": "^6.2.0"
     }
 }
