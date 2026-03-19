@@ -34,6 +34,7 @@
     <link rel="preload" href="icons/village.svg" as="image" type="image/svg+xml" />
     <link rel="preload" href="icons/castle.svg" as="image" type="image/svg+xml" />
     <link rel="preload" href="icons/ring.svg" as="image" type="image/svg+xml" />
+    <link rel="preload" href="icons/streetview-active.svg" as="image" type="image/svg+xml" />
     <link rel="preload" href="images/places/notfound.png" as="image" type="image/png" />
 </head>
 
@@ -73,7 +74,7 @@
     </aside>
     <div id="searchbar" style="display: none;">
         <form>
-            <input type="text" name="s" placeholder="Search in Middle-Earth Maps">
+            <input type="text" name="s" placeholder="Search in Middle-Earth Maps" autocomplete="off">
             <button type="submit">
                 <span class="sr-only">Search</span>
                 <img src="icons/magnifying-glass.svg" alt="">
@@ -83,6 +84,81 @@
 
         </ul>
     </div>
+
+    <div id="streetview-control" style="display: none;">
+        <div id="streetview-menu">
+            <button type="button" id="streetview-dummy">
+                <img width="24" height="24" src="icons/streetview.svg" alt="">
+            </button>
+            <button type="button" id="streetview-explore-button">
+                <span>
+                    <span>Explore</span>
+                    <svg width="20" height="12" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000">
+                        <path fill-rule="evenodd" d="M11.47 13.28a.75.75 0 0 0 1.06 0l7.5-7.5a.75.75 0 0 0-1.06-1.06L12 11.69 5.03 4.72a.75.75 0 0 0-1.06 1.06l7.5 7.5Z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd" d="M11.47 19.28a.75.75 0 0 0 1.06 0l7.5-7.5a.75.75 0 1 0-1.06-1.06L12 17.69l-6.97-6.97a.75.75 0 0 0-1.06 1.06l7.5 7.5Z" clip-rule="evenodd" />
+                    </svg>
+                </span>
+
+                <ul>
+                    <svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                        <defs>
+                            <linearGradient x1="0" x2="0" y1="0" y2="1" id="delapouite-castle-ruins-gradient-0">
+                                <stop offset="0%" stop-color="#b8e1fd" stop-opacity="1"></stop>
+                                <stop offset="100%" stop-color="#79a6cd" stop-opacity="1"></stop>
+                            </linearGradient>
+                        </defs>
+                        <path d="M0 0h512v512H0z" fill="url(#delapouite-castle-ruins-gradient-0)"></path>
+                        <g>
+                            <path
+                                d="M382.975 17.701 306.678 119.43 459.27 93.998l-76.296-76.297zM106.24 77.895l-17.5 4.21 34.05 141.487 13.6-20.405-30.15-125.292zm-35.209 7.683c-8.85 41.457-17.725 90.065-41.402 111.129 9.026 2.35 21.416-1.194 34.652-23.71 6.948 15.963 2.313 17.464-1.957 28.737 16.561-3.429 25.204-18.531 24.873-37.806l-16.166-78.35zm366.957 30.215L361 128.623V160h-18v-28.377l-32 5.334V199h82v32h30v-32h15.846l-18.776-56.33 17.918-26.877zM148.816 217l-31.04 46.563-41.085 13.695 32 63.998-55.83 18.611L25 387.727V487h90.512l-11.075-33.225-45.43-30.287 9.985-14.976 50.57 33.713L134.488 487h147.95l27.845-55.69-13.398-40.195L208 361.488l-45.154 15.051-5.692-17.078 44.04-14.68 28.245-70.613L204.273 249H151v-32h-2.184zM217 217v19.273l28.33 28.329 62.695 31.347-8.05 16.102-55.252-27.625-24.82 62.054 91.212 30.405 16.752 50.254 31.53 31.529L373.562 487H487V336.816L452.525 359.8l-32.5 16.252-8.05-16.102 31.5-15.748L487 315.184V217h-46v32h-66v-32h-46v32h-66v-32h-46z"
+                                fill="#e6dcd7" fill-opacity="1"></path>
+                        </g>
+                    </svg>
+
+                    <svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                        <path d="M0 0h512v512H0z" fill="#d2b36d" fill-opacity="1"></path>
+                        <g>
+                            <path
+                                d="M223 56c0 10.379 4.445 19.204 10.842 24.783 3.926 3.425 8.45 5.736 13.158 7.014V135h-14v-23h-18v39h-20v-21h-18v62.72c-19.19 7.082-37.964 17.092-56 30.208v-58.934h-18v73.291a282.668 282.668 0 0 0-10.457 9.586h-33.4l-38.565 34.414 11.985 13.43 26.902-24.008C114.487 355.396 241.709 480.047 313.02 482l173.49-2.098c-151.243-45.507-340.499-153.37-382.876-218.722 43.018-42.118 90.85-61.809 139.324-63.746 31.842 54.994 110.736 79.49 203.701 94.867 11.746 12.426 22.889 25.889 33.277 40.303l14.602-10.526c-28.985-40.215-63.67-73.656-101.539-98.053v-36.152h-18v25.367c-13.79-7.642-27.936-14.081-42.32-19.24H335v-64h-18v21h-20v-39h-18v23h-14V87.797c4.707-1.278 9.232-3.59 13.158-7.014C284.555 75.203 289 66.38 289 56h-18c0 5.621-1.899 8.796-4.674 11.217C263.551 69.637 259.536 71 256 71c-3.536 0-7.551-1.363-10.326-3.783C242.899 64.797 241 61.62 241 56zm10 97h46v28.068a224.497 224.497 0 0 0-30.518-1.648 217.21 217.21 0 0 0-15.482.78zm-38 16h20v13.533a214.155 214.155 0 0 0-20 4.438zm102 0h20v19.902a253.061 253.061 0 0 0-13.809-3.588c-2.06-.472-4.124-.914-6.191-1.332zm-16.12 30.45c6.106.88 12.205 2.014 18.288 3.41 38.124 8.743 75.622 27.692 109.83 54.824-42.055-4.773-85.428-20.978-128.117-58.235z"
+                                fill="#b19d56" fill-opacity="1"></path>
+                        </g>
+                    </svg>
+
+                    <svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                        <path d="M0 0h512v512H0z" fill="#9bb061" fill-opacity="1"></path>
+                        <g>
+                            <path
+                                d="m64 22.683 64 27.632 16-16zm384 0-80 11.632 16 16zm-204.908 5.902c-17.084 3.209-34.355 12.056-48.1 21.219-11.706 7.804-19.017 14.13-23.594 18.302 7.8 12.21 20.963 24.967 35.594 34.721 12.313 8.209 25.698 14.22 37.088 16.912l-13.445-53.783zm25.816 0 12.457 37.371-13.445 53.783c11.39-2.692 24.775-8.703 37.088-16.912 14.631-9.754 27.793-22.512 35.594-34.72-4.577-4.173-11.888-10.5-23.594-18.303-13.745-9.163-31.016-18.01-48.1-21.219zM256 46.771l-6.635 19.904L256 93.214l6.635-26.54zM128 66.315l-96 16 112 16zm256 0-16 32 112-16zm-224 48-80 48 96-32zm192 0-16 16 96 32zm-152.178 29.928-25.834 297.074h27.594l13.174-289.845c-4.634-2.16-9.539-4.546-14.934-7.229zm112.356 0c-5.395 2.683-10.3 5.069-14.934 7.229l13.174 289.845h27.594zm-79.739 14.608L219.6 441.317h72.8l-12.84-282.466c-8.328 2.898-15.853 4.462-23.56 4.462-7.707 0-15.232-1.564-23.56-4.462zm-85.943 300.462-50.008 30.004H199.4l1.364-30.004zm72.285 0-1.363 30.004h77.164l-1.363-30.004zm92.455 0 1.364 30.004h102.912l-50.004-30.004z"
+                                fill="#e7d6a2" fill-opacity="1"></path>
+                        </g>
+                    </svg>
+
+                    <svg width="20" height="12" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000">
+                        <path fill-rule="evenodd" d="M11.47 10.72a.75.75 0 0 1 1.06 0l7.5 7.5a.75.75 0 1 1-1.06 1.06L12 12.31l-6.97 6.97a.75.75 0 0 1-1.06-1.06l7.5-7.5Z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd" d="M11.47 4.72a.75.75 0 0 1 1.06 0l7.5 7.5a.75.75 0 1 1-1.06 1.06L12 6.31l-6.97 6.97a.75.75 0 0 1-1.06-1.06l7.5-7.5Z" clip-rule="evenodd" />
+                    </svg>
+                </ul>
+            </button>
+        </div>
+        <nav id="streetview-explore">
+            <ul>
+            </ul>
+        </nav>
+    </div>
+
+    <div id="streetview" style="display: none;">
+        <div></div>
+    </div>
+
+    <button type="button" id="streetview-minimap">
+        <span class="sr-only">Return to map</span>
+        <img id="streetview-minimap-image" src="" alt="">
+        <div id="streetview-minimap-dummy">
+            <div id="streetview-minimap-compass"></div>
+            <img width="24" height="24" src="icons/streetview-active.svg" alt="">
+        </div>
+    </button>
+
     <footer id="footer" style="display: none;">
         <nav>
             <ul>

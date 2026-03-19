@@ -2,6 +2,7 @@
 
 * {
     scrollbar-width: thin;
+    box-sizing: border-box;
 }
 
 /* google-sans-regular - latin */
@@ -67,9 +68,12 @@ body,
     overflow: hidden;
 }
 
+.leaflet-container {
+    font-family: "Google Sans", Roboto, Arial, sans-serif;
+}
+
 img {
     display: inline-block;
-    width: 100%;
 }
 
 ul {
@@ -177,10 +181,13 @@ a {
 }
 
 .leaflet-control-attribution {
+    position: fixed;
     font-family: "Google Sans", Roboto, Arial, sans-serif;
     font-size: 10px;
     color: #1f1f1f;
     user-select: none;
+    bottom: 0;
+    right: 0;
 }
 
 @media (max-width: 800px) {
@@ -373,6 +380,7 @@ a {
 #sidebar header>.picture>img {
     object-fit: cover;
     object-position: center;
+    width: 100%;
     height: 100%;
     user-select: none;
 }
@@ -403,6 +411,7 @@ a {
 }
 
 #media .gallery>.item>img {
+    width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: center;
@@ -420,6 +429,10 @@ a {
     background-image: linear-gradient(to top, black, rgba(0, 0, 0, 0));
 }
 
+.leaflet-left {
+    z-index: 1001;
+}
+
 #footer nav ul {
     display: flex;
     list-style: none;
@@ -435,4 +448,203 @@ a {
 
 #footer nav ul li a>svg {
     fill: #fff;
+}
+
+#streetview {
+    position: absolute;
+    inset: 0;
+    background-color: #fff;
+    z-index: 500;
+}
+
+#streetview-control {
+    display: inline-flex;
+    flex-direction: column;
+    isolation: isolate;
+    align-items: end;
+
+    margin-right: 10px;
+    margin-bottom: 20px;
+}
+
+#streetview-menu {
+    background-color: #fff;
+    /* width: 30px;
+    height: 30px;
+    line-height: 30px; */
+    border-radius: 8px;
+    display: inline-flex;
+    /* text-align: center; */
+    border: none;
+    cursor: pointer;
+    overflow: hidden;
+    height: 35px;
+    z-index: 1;
+}
+
+.leaflet-control.leaflet-control-streetview {
+    margin: 0;
+}
+
+#streetview-menu>button {
+    border: none;
+    background: none;
+    padding: 5px;
+    cursor: pointer;
+    margin: 0;
+}
+
+#streetview-menu>button:hover {
+    background-color: #ededed;
+}
+
+#streetview-menu>button,
+#streetview-explore-button>ul {
+    display: inline-flex;
+    justify-items: center;
+    align-items: center;
+    gap: 4px;
+}
+
+#streetview-explore-button>span {
+    display: none;
+}
+
+#streetview-explore-button>ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+button#streetview-dummy {
+    min-width: 35px;
+    border-right: 1px #ccc solid;
+}
+
+#streetview-minimap {
+    position: relative;
+    border: 2px #fff solid;
+    background-color: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    overflow: hidden;
+    width: 200px;
+    height: 100px;
+    padding: 0;
+}
+
+#streetview-minimap-image {
+    width: 100%;
+    border-radius: 8px;
+    isolation: isolate;
+}
+
+#streetview-minimap-dummy {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#streetview-minimap-compass {
+    --rotation: 0deg;
+    position: absolute;
+    content: "";
+    width: 20px;
+    height: 20px;
+    background-color: rgba(0, 0, 0, 0.1);
+    left: 50%;
+    bottom: 0%;
+    transform: translate(-50%, 2px) rotate(var(--rotation));
+    z-index: -1;
+    border-radius: 50% 50%;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+}
+
+#streetview-minimap-compass::after {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translate(100%, -50%);
+    content: "";
+    border-left: 9px solid rgba(0, 0, 0, 0.5);
+    border-right: 9px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-top: 5px solid transparent;
+}
+
+#streetview-explore {
+    display: none;
+    padding: 10px;
+    background-color: #fff;
+    box-shadow: 0px -2px 3px rgba(0, 0, 0, 0.1);
+    width: 100vw;
+}
+
+#streetview-explore ul {
+    display: flex;
+    gap: 10px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+}
+
+#streetview-explore ul>li button {
+    display: block;
+    width: 200px;
+    height: 100px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    object-fit: cover;
+    object-position: center;
+    overflow: hidden;
+    border-radius: 8px;
+    padding: 0;
+    position: relative;
+}
+
+#streetview-explore ul>li button p {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.75));
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    font-size: 12px;
+    color: #fff;
+    margin: 0;
+    padding: 8px;
+    pointer-events: none;
+    user-select: none;
+}
+
+#streetview-explore ul>li button img {
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    user-select: none;
+}
+
+#streetview-control.explore {
+    margin-right: 0;
+    margin-bottom: 0;
+}
+
+#streetview-control.explore #streetview-explore {
+    display: block;
+}
+
+#streetview-control.explore #streetview-menu {
+    margin-right: 10px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+#streetview-control.explore #streetview-explore-button>ul {
+    display: none;
+}
+
+#streetview-control.explore #streetview-explore-button>span {
+    display: inline-block;
 }

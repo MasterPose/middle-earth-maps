@@ -7,6 +7,7 @@
         "preview": "vite preview"
     },
     "devDependencies": {
+        "@types/dom-to-image": "^2.6.7",
         "@types/leaflet": "^1.9.21",
         "@types/shpjs": "^3.4.7",
         "papaparse": "^5.5.3",
@@ -21,6 +22,8 @@
         "vite-plugin-singlefile-compression": "^2.0.13"
     },
     "dependencies": {
+        "dom-to-image-more": "^3.7.2",
+        "interactjs": "^1.10.27",
         "leaflet": "^1.9.4",
         "minisearch": "^7.2.0",
         "shpjs": "^6.2.0"

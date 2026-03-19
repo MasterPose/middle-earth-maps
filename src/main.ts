@@ -2,6 +2,14 @@ import type { Feature, Geometry, GeometryObject, Point } from 'geojson';
 import * as L from 'leaflet';
 import './style.css'
 import MiniSearch from 'minisearch';
+import interact from 'interactjs';
+import domToImage from 'dom-to-image-more';
+
+import './vendor/pannellum.js';
+import './vendor/pannellum.css';
+
+import './vendor/Leaflet.PointInPolygon.js';
+
 
 const $app = document.querySelector<HTMLDivElement>('#app')!;
 const $sidebar = document.querySelector<HTMLDivElement>('#sidebar')!;
@@ -22,15 +30,196 @@ const $sidebarMediaGallery = $sidebar.querySelector<HTMLDivElement>('#media>.gal
 const $sidebarKnownAs = $sidebar.querySelector<HTMLDivElement>('#also-known')!;
 const $sidebarKnownAsList = $sidebar.querySelector<HTMLUListElement>('#also-known>ul')!;
 
-const $seachbar = document.querySelector<HTMLDivElement>('#searchbar')!;
-const $seachbarForm = $seachbar.querySelector<HTMLFormElement>('form')!;
-const $seachbarFormInput = $seachbarForm.querySelector<HTMLInputElement>('input')!;
-const $seachbarList = $seachbar.querySelector<HTMLUListElement>('ul')!;
+const $searchbar = document.querySelector<HTMLDivElement>('#searchbar')!;
+const $searchbarForm = $searchbar.querySelector<HTMLFormElement>('form')!;
+const $searchbarFormInput = $searchbarForm.querySelector<HTMLInputElement>('input')!;
+const $searchbarList = $searchbar.querySelector<HTMLUListElement>('ul')!;
 
 const $footer = document.querySelector<HTMLDivElement>('#footer')!;
 
+const $streetview = document.querySelector<HTMLDivElement>('#streetview')!;
+const $streetviewPanellum = $streetview.querySelector<HTMLDivElement>('div')!;
+
+const $streetviewControl = document.querySelector<HTMLDivElement>('#streetview-control')!;
+const $streetviewMinimap = document.querySelector<HTMLDivElement>('#streetview-minimap')!;
+const $streetviewMinimapImage = $streetviewMinimap.querySelector<HTMLImageElement>('#streetview-minimap-image')!;
+const $streetviewMinimapCompass = $streetviewMinimap.querySelector<HTMLImageElement>('#streetview-minimap-compass')!;
+
+const $streetviewDummy = $streetviewControl.querySelector<HTMLButtonElement>('#streetview-dummy')!;
+const $streetviewDummyImage = $streetviewDummy.querySelector<HTMLImageElement>('img')!;
+
+const $streetviewExploreButton = $streetviewControl.querySelector<HTMLButtonElement>('#streetview-explore-button')!;
+const $streetviewExplore = $streetviewControl.querySelector<HTMLDivElement>('#streetview-explore')!;
+const $streetviewExploreList = $streetviewExplore.querySelector<HTMLDivElement>('ul')!;
+
+// function hotspot(hotSpotDiv: HTMLDivElement, args: string) {
+//     hotSpotDiv.classList.add('custom-tooltip');
+//     var span = document.createElement('span');
+//     span.innerHTML = args;
+//     hotSpotDiv.appendChild(span);
+//     span.style.width = span.scrollWidth - 20 + 'px';
+//     span.style.marginLeft = -(span.scrollWidth - hotSpotDiv.offsetWidth) / 2 + 'px';
+//     span.style.marginTop = -span.scrollHeight - 12 + 'px';
+// }
+
+const STREETVIEW_SCENES = new Map([
+    ['SeaOfNurnen', {
+        panorama: "nurnen.webp"
+    }],
+    ['Bree', {
+        panorama: "archet.webp"
+    }],
+    ['CirithGorgor', {
+        panorama: "black-gate.webp"
+    }],
+]);
+const panellum = (window as any).pannellum.viewer($streetviewPanellum, {
+    autoLoad: false,
+    showZoomCtrl: false,
+    showFullscreenCtrl: false,
+    scenes: Array.from(STREETVIEW_SCENES).reduce((obj: any, [id, opts]) => {
+        obj[id] = {
+            ...opts,
+            panorama: `./images/panoramas/${opts.panorama}`,
+            type: "equirectangular",
+        };
+
+        return obj;
+    }, {})
+});
+const $panellumDragFix = document.querySelector<HTMLDivElement>('.pnlm-dragfix');
+const $panellumAboutMsg = document.querySelector<HTMLDivElement>('.pnlm-about-msg');
+
+$panellumDragFix?.addEventListener('contextmenu', () => {
+    if (!$panellumAboutMsg) return;
+    $panellumAboutMsg.style.display = 'none';
+});
+
+let draggingPanellum = false;
+
+function startDraggingPanellum() {
+    if (draggingPanellum) return;
+
+    draggingPanellum = true;
+    const tick = () => {
+        if (!draggingPanellum) return;
+        updateDraggingPanellum();
+        requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+}
+
+function updateDraggingPanellum() {
+    const angle = -panellum.getYaw() - panellum.getNorthOffset();
+    $streetviewMinimapCompass.style.setProperty('--rotation', `${angle}deg`);
+}
+
+function stopDraggingPanellum() {
+    draggingPanellum = false;
+}
+
+panellum.on('mousedown', () => startDraggingPanellum());
+panellum.on('touchstart', () => startDraggingPanellum());
+
+panellum.on('mouseup', () => stopDraggingPanellum());
+panellum.on('touchend', () => stopDraggingPanellum());
+
+panellum.on('animatefinished', () => updateDraggingPanellum());
+
+let showingStreetView: string | undefined;
+function showStreetView(id: string) {
+    closeExploreMenu();
+
+    if (id === showingStreetView) return;
+    if (!STREETVIEW_SCENES.has(id)) return;
+
+    $streetviewExplore.style.paddingLeft = '220px';
+    $streetviewMinimap.style.display = '';
+    $streetview.style.display = '';
+    $streetviewDummy.style.display = 'none';
+    setTimeout(() => panellum.loadScene(id), 0);
+    showingStreetView = id;
+    saveStreetView(id);
+}
+
+function closeStreetView() {
+    closeExploreMenu();
+
+    try {
+        if ($streetviewMinimapImage.src) URL.revokeObjectURL($streetviewMinimapImage.src);
+    } catch (error) {
+        console.error(error);
+    }
+
+    $streetviewExplore.style.paddingLeft = '';
+    $streetviewMinimap.style.display = 'none';
+    $streetview.style.display = 'none';
+    $streetviewDummy.style.display = '';
+    showingStreetView = undefined;
+    saveStreetView('');
+}
+
+$streetviewMinimap.addEventListener('click', () => closeStreetView());
+
+$streetviewExploreList.addEventListener('click', (e) => {
+    const id = (e.target as HTMLElement | undefined)?.dataset.streetviewId;
+
+    if (!id) return;
+
+    autoShowStreetView(id);
+})
+
+function autoShowStreetView(id: string) {
+    const marker = allPlaceMarkers.get(id);
+
+    if (!marker) return;
+
+    focusOnMarker(id, false);
+
+    map.once('moveend', () => {
+        const coords = map.latLngToContainerPoint(marker?.getLatLng());
+        showStreetView(id);
+        setStreetViewMinimap(coords.x, coords.y);
+    });
+}
+
+function closeExploreMenu() {
+    $streetviewControl.classList.remove('explore');
+}
+
+function toggleExploreMenu() {
+    if ($streetviewControl.classList.contains('explore')) {
+        closeExploreMenu();
+    } else {
+        let html = '';
+
+        allPlaceMarkers.forEach((marker, id) => {
+            if (!STREETVIEW_SCENES.has(id)) return;
+            if (!map.getBounds().contains(marker.getLatLng())) return;
+
+            const props = placeDatabase[id];
+
+            html += '<li>';
+            html += `<button type="button" data-streetview-id="${id}">`;
+            html += `<img src="${props.images[0] ?? 'images/places/notfound.png'}" alt="" srcset="">`;
+            html += `<p>${props.name}</p>`;
+            html += '</button>';
+            html += '</li>';
+        })
+
+        $streetviewExploreList.innerHTML = html;
+
+        $streetviewControl.classList.add('explore');
+    }
+}
+
+$streetviewExploreButton.addEventListener('click', () => toggleExploreMenu());
+
 $sidebar.style.display = '';
-$seachbar.style.display = '';
+// $streetview.style.display = '';
+$streetviewControl.style.display = '';
+$streetviewMinimap.style.display = '';
+$searchbar.style.display = '';
 $footer.style.display = '';
 
 const ZOOM_MAX = 22;
@@ -46,38 +235,227 @@ const map = L.map($app, {
 });
 map.attributionControl.setPrefix('Made using Leaflet. Map data by Arda Maps. Middle-Earth Maps is not affiliated with the aforementioned, Middle-Earth Enterprises, the Tolkien State nor Google Maps.');
 
+const StreetviewMinimapControl = L.Control.extend({
+    onAdd: function () {
+        $streetviewMinimap.style.display = 'none';
+        return $streetviewMinimap;
+    },
+    onRemove: function () { }
+});
+
 const SocialControl = L.Control.extend({
     onAdd: function () {
         const div = L.DomUtil.create('div');
+        div.classList.add('leaflet-control-social');
         div.appendChild($footer)
         return div;
     },
     onRemove: function () { }
 });
 
+function layerContainsPoint(layer: any, latLng: L.LatLngExpression) {
+    return (layer.contains && layer.contains(latLng))
+        || layer.getBounds().contains(latLng);
+}
+
+function setStreetViewMinimap(containerX: number, containerY: number) {
+    $streetviewMinimapImage.src = '';
+
+    domToImage.toBlob(map.getContainer(), {
+        quality: 0.7,
+        skipFonts: true,
+        width: 200,
+        height: 100,
+        adjustClonedNode(node: HTMLElement, clone: HTMLElement, after: boolean) {
+            if (after) return clone;
+            if (node.parentElement !== $app) return clone;
+
+            const originalTransform = clone.style.transform.replace(/^translate3d\(|\)$/g, '').split(',').map((v) => parseFloat(v.replace(/px$/, '')));
+            clone.style.transform = `translate3d(${-containerX + 100 + originalTransform[0]}px, ${-containerY + 50 + originalTransform[1]}px, 0px)`;
+
+            return clone;
+        },
+        filter(domNode: HTMLElement) {
+            return !domNode.classList?.contains('leaflet-control-container')
+        },
+    }).then((v: Blob) => {
+        if (!v) return;
+
+        const url = URL.createObjectURL(v)
+        $streetviewMinimapImage.src = url;
+    });
+}
+
+let draggingStreetview = false;
+const StreetviewControl = L.Control.extend({
+    onAdd: function () {
+        const div = L.DomUtil.create('div');
+        div.classList.add('leaflet-control-streetview');
+        interact($streetviewDummy).draggable({
+            inertia: false,
+            modifiers: [
+                // interact.modifiers.restrictRect({
+                //     restriction: 'parent',
+                //     endOnly: true,
+                // }),
+            ],
+            listeners: {
+                start: () => {
+                    draggingStreetview = true;
+                    allPlaceMarkers.forEach((marker, id) => {
+                        const props = marker.feature?.properties;
+
+                        if (!props) return;
+
+                        if (!STREETVIEW_SCENES.has(id)) return;
+
+                        (props.regionLayer as L.Polygon | undefined)?.setStyle(STYLE_REGION_STREETVIEW);
+                    })
+                },
+                move: (event: Event & { dx: number, dy: number }) => {
+                    const x = (parseFloat($streetviewDummyImage.dataset.x ?? '') || 0) + event.dx
+                    const y = (parseFloat($streetviewDummyImage.dataset.y ?? '') || 0) + event.dy
+
+                    $streetviewDummyImage.style.position = 'absolute';
+                    $streetviewDummyImage.style.transform = 'translate(' + x + 'px, ' + y + 'px)'
+
+                    $streetviewDummyImage.dataset.x = x + '';
+                    $streetviewDummyImage.dataset.y = y + '';
+                    $streetviewDummyImage.src = 'icons/streetview-active.svg';
+                },
+                end: (event: Event & { client: { x: number, y: number } }) => {
+                    setTimeout(() => draggingStreetview = false, 0)
+
+                    $streetviewDummyImage.style.position = '';
+                    $streetviewDummyImage.style.transform = ''
+
+                    $streetviewDummyImage.dataset.x = '0';
+                    $streetviewDummyImage.dataset.y = '0';
+                    $streetviewDummyImage.src = 'icons/streetview.svg';
+
+                    const mouseX = event.client.x;
+                    const mouseY = event.client.y;
+
+                    const mouseLatLng = map.containerPointToLatLng([mouseX, mouseY]);
+                    const mouseLat = mouseLatLng.lat.toFixed(4);
+                    const mouseLng = mouseLatLng.lng.toFixed(4);
+
+                    let foundId = ''
+
+                    for (const [id, marker] of allPlaceMarkers) {
+                        const markerLatLng = marker.getLatLng();
+                        const props = marker.feature?.properties;
+
+                        if (!props) continue;
+
+                        if (!STREETVIEW_SCENES.has(id)) continue;
+
+                        if (foundId && markerLatLng.lat.toFixed(4) === mouseLat && markerLatLng.lng.toFixed(4) === mouseLng) {
+                            foundId = id;
+                        } else if (props.regionLayer) {
+                            const regionLayer = props.regionLayer as L.Polygon | L.Circle | undefined;
+                            regionLayer?.setStyle(STYLE_TRANSPARENT);
+
+                            if (!foundId && regionLayer && layerContainsPoint(regionLayer, mouseLatLng)) {
+                                foundId = id;
+                            }
+                        }
+
+
+                    }
+
+                    if (!foundId) {
+                        showSidebar(sidebarSelectedID);
+                        return;
+                    }
+
+                    $searchbarFormInput.value = placeDatabase[foundId]?.searchname ?? '';
+
+                    setStreetViewMinimap(mouseX, mouseY);
+                    showStreetView(foundId);
+                }
+            }
+        });
+
+        div.addEventListener('mouseover', () => map.dragging.disable());
+
+        // Re-enable dragging when user's cursor leaves the element
+        div.addEventListener('mouseout', () => map.dragging.enable());
+
+        div.addEventListener('click', (e) => e.stopPropagation())
+
+        div.appendChild($streetviewControl)
+        return div;
+    },
+    onRemove: function () { }
+});
+
+(new StreetviewMinimapControl({ position: 'bottomleft' })).addTo(map);
 (new SocialControl({ position: 'bottomleft' })).addTo(map);
+(new StreetviewControl({ position: 'bottomright' })).addTo(map);
 
 let miniSearch: MiniSearch;
 let lastSearchTerm: string;
 
-function saveSearch(term: string) {
-    if (term) {
-        url.searchParams.set('s', term);
-    } else {
-        url.searchParams.delete('s')
+class QueryBuilder {
+    private static url: URL;
+    private static params: URLSearchParams;
+    private static timeoutId: number | undefined;
+
+    static refresh() {
+        this.url = new URL(window.location.href);
+        this.params = this.url.searchParams;
     }
 
-    window.history.pushState({ path: url.href }, '', url.href);
+    static set(key: string, value: string | null) {
+        if (value === null) {
+            this.delete(key);
+            return;
+        }
+
+        const oldValue = this.get(key);
+        if (oldValue === value) return;
+
+        this.params.set(key, value);
+        this.onUpdated();
+    }
+
+    static has(key: string) {
+        return this.params.has(key)
+    }
+
+    static get(key: string) {
+        return this.params.get(key)
+    }
+
+    static delete(key: string) {
+        const oldValue = this.get(key);
+        if (oldValue === null) return;
+
+        this.params.delete(key);
+        this.onUpdated();
+    }
+
+    private static onUpdated() {
+        if (this.timeoutId) return;
+
+        this.timeoutId = setTimeout(() => {
+            this.timeoutId = undefined;
+            window.history.pushState({ path: this.url.href }, '', this.url.href);
+        }, 0);
+    }
+}
+
+function saveSearch(term: string) {
+    QueryBuilder.set('s', term ? term : null);
+}
+
+function saveStreetView(id: string) {
+    QueryBuilder.set('v', id ? id : null);
 }
 
 function saveSelected(id: string = '') {
-    if (id) {
-        url.searchParams.set('p', id);
-    } else {
-        url.searchParams.delete('p')
-    }
-
-    window.history.pushState({ path: url.href }, '', url.href);
+    QueryBuilder.set('p', id ? id : null);
 }
 
 function search(term: string) {
@@ -85,7 +463,7 @@ function search(term: string) {
     saveSearch(term);
 
     if (!term) {
-        $seachbar.classList.remove('has-items');
+        $searchbar.classList.remove('has-items');
         return;
     }
 
@@ -97,15 +475,15 @@ function search(term: string) {
     }).slice(0, 10).filter((v) => allPlaceMarkers.has(v.id));
 
     if (result.length) {
-        $seachbar.classList.add('has-items');
+        $searchbar.classList.add('has-items');
 
-        $seachbarList.innerHTML = result.map((v) => `<li data-id="${v.id}">${v.searchname}</li>`).join('');
+        $searchbarList.innerHTML = result.map((v) => `<li data-id="${v.id}">${v.searchname}</li>`).join('');
     } else {
-        $seachbar.classList.remove('has-items');
+        $searchbar.classList.remove('has-items');
     }
 }
 
-function focusOnMarker(id?: string) {
+function focusOnMarker(id?: string, sidebar: boolean = true) {
     if (!id) return;
 
     const marker = allPlaceMarkers.get(id);
@@ -113,16 +491,16 @@ function focusOnMarker(id?: string) {
 
     // @ts-expect-error
     map.setView(marker.getLatLng(), Math.max(map.getZoom(), marker.options.minZoom));
-    showSidebar(id);
+    if (sidebar) showSidebar(id);
 }
 
 fetch('search.json').then((v) => v.text()).then((searchIndex) => {
-    $seachbar.addEventListener('click', (e) => {
+    $searchbar.addEventListener('click', (e) => {
         const target = e.target as HTMLElement | null;
 
         if (!target) return;
         if (!target.parentElement) return;
-        if (target.parentElement !== $seachbarList) return;
+        if (target.parentElement !== $searchbarList) return;
 
         focusOnMarker(target.dataset.id);;
     });
@@ -132,16 +510,16 @@ fetch('search.json').then((v) => v.text()).then((searchIndex) => {
     });
 
 
-    $seachbarForm.addEventListener('submit', (e) => {
+    $searchbarForm.addEventListener('submit', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        search($seachbarFormInput.value);
+        search($searchbarFormInput.value);
     })
-    $seachbarFormInput.addEventListener('focus', () => search($seachbarFormInput.value));
-    $seachbarFormInput.addEventListener('input', () => search($seachbarFormInput.value));
+    $searchbarFormInput.addEventListener('focus', () => search($searchbarFormInput.value));
+    $searchbarFormInput.addEventListener('input', () => search($searchbarFormInput.value));
 }).catch((e) => {
     console.error(e);
-    $seachbar.classList.add('hidden');
+    $searchbar.classList.add('hidden');
 });
 
 L.control.zoom({
@@ -226,7 +604,7 @@ function showSidebar(id?: string) {
 
     $sidebar.classList.remove('hidden');
     $sidebarName.innerText = name;
-    $seachbarFormInput.value = info.searchname;
+    $searchbarFormInput.value = info.searchname;
 
     changeTitle(name);
 
@@ -336,7 +714,25 @@ const PlaceMarker = L.Marker.extend({
         const minZoom: number = Math.min(ZOOM_MIN + zoom - Math.min(size, 2), 19);
 
         this.feature = feature;
-        const region = feature.properties.regionLayer;
+
+        let regionLayer: L.Circle | undefined = featureProps.regionLayer;
+        if (!regionLayer) {
+            let radius: number | undefined;
+
+            if (type === 'point_city') {
+                radius = Math.max(feature.properties.size * 5, 2);
+            } else if (STREETVIEW_SCENES.has(id)) {
+                radius = 2
+            }
+
+            if (radius) {
+                regionLayer = featureProps.regionLayer = L.circle(coords, {
+                    ...STYLE_TRANSPARENT,
+                    radius
+                });
+                this.once('add', () => regionLayer!.addTo(map));
+            }
+        }
 
         let html: string
         let zIndex: number = withoutIcon ? 998 - (3 - size) : 0;
@@ -379,7 +775,7 @@ const PlaceMarker = L.Marker.extend({
             showSidebar(id);
 
             map.fitBounds(
-                region ? region.getBounds() : L.latLngBounds([this.getLatLng()]), {
+                regionLayer ? regionLayer.getBounds() : L.latLngBounds([this.getLatLng()]), {
                 padding: [50, 50],
                 maxZoom: 20
             });
@@ -406,6 +802,30 @@ function refreshPlaceMarkers() {
     });
 }
 
+function checkQuery() {
+    QueryBuilder.refresh();
+
+    if (QueryBuilder.has('s')) {
+        search($searchbarFormInput.value = QueryBuilder.get('s')!.trim());
+    } else {
+        search('');
+    }
+
+    if (QueryBuilder.has('p')) {
+        focusOnMarker(QueryBuilder.get('p')!);
+    } else if (sidebarSelectedID) {
+        showSidebar('')
+    }
+
+    if (QueryBuilder.has('v')) {
+        autoShowStreetView(QueryBuilder.get('v')!)
+    } else if (showingStreetView) {
+        closeStreetView();
+    }
+}
+
+window.addEventListener('popstate', () => setTimeout(() => checkQuery(), 10));
+
 window.addEventListener('click', (e) => {
     if (!lastSearchTerm) return;
 
@@ -417,18 +837,20 @@ window.addEventListener('click', (e) => {
     if (!parentElement) return;
 
     if (
-        parentElement === $seachbar ||
-        parentElement === $seachbarForm ||
-        parentElement === $seachbarList
+        parentElement === $searchbar ||
+        parentElement === $searchbarForm ||
+        parentElement === $searchbarList
     ) {
         return;
     }
 
     search('');
 })
+
 map.addEventListener('zoom', () => refreshPlaceMarkers());
-map.addEventListener('click', () => {
+map.addEventListener('click', (e) => {
     if (lastSearchTerm) return search('');
+    if (draggingStreetview) return;
 
     if (sidebarSelectedID) {
         showSidebar(undefined);
@@ -453,6 +875,13 @@ const STYLE_REGION: L.PathOptions = {
     weight: 2,
     dashArray: [4],
     color: '#ed5f53'
+}
+const STYLE_REGION_STREETVIEW = {
+    stroke: true,
+    fill: false,
+    weight: 1,
+    dashArray: [],
+    color: '#129eaf'
 }
 const STYLE_TRANSPARENT: L.PathOptions = {
     stroke: false,
@@ -540,16 +969,7 @@ const layersOpts: Record<string, L.GeoJSONOptions | undefined> = {
         pointToLayer
     },
     point_city: {
-        pointToLayer(feature, latlng) {
-            const marker = new PlaceMarker(feature, latlng);
-            marker.once('add', () => {
-                feature.properties.regionLayer = L.circle(latlng, {
-                    ...STYLE_TRANSPARENT,
-                    radius: Math.max(feature.properties.size * 5, 2)
-                }).addTo(map);
-            })
-            return marker;
-        },
+        pointToLayer
     },
     point_waterfall: {
         pointToLayer
@@ -574,8 +994,6 @@ const layersPromises = Object.keys(layersOpts).map(async (layerName) => {
     return [layerName, await retrieveFiles()] as const;
 })
 
-const url = new URL(window.location.href);
-
 Promise.all(layersPromises).then((data) => Object.fromEntries(data)).then(async (data) => {
     const alreadyAddedIds = new Set<string>();
 
@@ -590,6 +1008,10 @@ Promise.all(layersPromises).then((data) => Object.fromEntries(data)).then(async 
         geojson.features.forEach((v: any) => {
             v.properties = v.properties || {};
             v.properties.layer = key;
+
+            if (key === 'poly_lake') {
+                if (v.properties.eventname) v.properties.eventname = `Lake_${v.properties.eventname}`
+            }
         });
 
         geojson.features = geojson.features.filter((v: any) => {
@@ -615,16 +1037,5 @@ Promise.all(layersPromises).then((data) => Object.fromEntries(data)).then(async 
     map.setZoom(15.58);
     refreshPlaceMarkers();
     changeTitle('');
-
-    const searchQuery = url.searchParams.get('s');
-    const placeQuery = url.searchParams.get('p');
-
-    if (searchQuery) {
-        $seachbarFormInput.value = searchQuery.trim();
-        search(searchQuery);
-    }
-
-    if (placeQuery) {
-        focusOnMarker(placeQuery);
-    }
+    checkQuery();
 })
