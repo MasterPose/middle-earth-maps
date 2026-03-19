@@ -848,7 +848,7 @@ window.addEventListener('click', (e) => {
 })
 
 map.addEventListener('zoom', () => refreshPlaceMarkers());
-map.addEventListener('click', (e) => {
+map.addEventListener('click', () => {
     if (lastSearchTerm) return search('');
     if (draggingStreetview) return;
 
