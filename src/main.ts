@@ -61,25 +61,22 @@ const $streetviewExploreList = $streetviewExplore.querySelector<HTMLDivElement>(
 //     span.style.marginTop = -span.scrollHeight - 12 + 'px';
 // }
 
-const STREETVIEW_SCENES = new Map([
-    ['SeaOfNurnen', {
-        panorama: "nurnen.webp"
-    }],
-    ['Bree', {
-        panorama: "archet.webp"
-    }],
-    ['CirithGorgor', {
-        panorama: "black-gate.webp"
-    }],
+const STREETVIEW_SCENES = new Map<string, Record<string, any>>([
+    // ['SeaOfNurnen', {}],
+    // ['CirithGorgor', {}],
+    // ['Bree', {}],
+    // ['BrandywineBridge', {}],
+    ['TomBombadil', {}]
 ]);
 const panellum = (window as any).pannellum.viewer($streetviewPanellum, {
     autoLoad: false,
     showZoomCtrl: false,
     showFullscreenCtrl: false,
+    hfov: 120,
     scenes: Array.from(STREETVIEW_SCENES).reduce((obj: any, [id, opts]) => {
         obj[id] = {
             ...opts,
-            panorama: `./images/panoramas/${opts.panorama}`,
+            panorama: `./images/panoramas/${id}.webp`,
             type: "equirectangular",
         };
 
