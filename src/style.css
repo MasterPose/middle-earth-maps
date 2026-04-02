@@ -648,3 +648,13 @@ button#streetview-dummy {
 #streetview-control.explore #streetview-explore-button>span {
     display: inline-block;
 }
+
+.streetview-hotspot {
+    color: #fff;
+    opacity: 0.33;
+}
+
+.streetview-hotspot:hover {
+    color: #fff;
+    opacity: 0.5;
+}

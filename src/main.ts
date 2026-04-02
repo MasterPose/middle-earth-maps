@@ -61,13 +61,81 @@ const $streetviewExploreList = $streetviewExplore.querySelector<HTMLDivElement>(
 //     span.style.marginTop = -span.scrollHeight - 12 + 'px';
 // }
 
+function hotspot(
+    yaw = 0,
+    pitch = 0,
+    id = '',
+    degrees = 0,
+    scale = 1,
+) {
+    return {
+        text: {
+            [Symbol.toPrimitive]() {
+                return placeDatabase[id].name;
+            },
+        },
+        pitch,
+        yaw,
+        cssClass: "streetview-hotspot",
+        clickHandlerFunc: () => id && autoShowStreetViewBackground(id),
+        createTooltipFunc: (root: HTMLDivElement) => {
+            const container = document.createElement('div');
+            root.appendChild(container);
+
+            container.style.transform = `rotateX(60deg) rotateZ(${degrees}deg)`;
+            container.innerHTML = `
+            <svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 14"
+                width="${Math.round(80 * scale)}"
+                height="${Math.round(140 * scale)}"
+                fill="currentColor">
+                <path  d="m1.7 0.3l6 6q0.1 0.1 0.2 0.3 0.1 0.2 0.1 0.4 0 0.2-0.1 0.4-0.1 0.2-0.2 0.3l-6 6q-0.3 0.3-0.7 0.3-0.4 0-0.7-0.3-0.3-0.3-0.3-0.7 0-0.4 0.3-0.7l5.3-5.3-5.3-5.3q-0.3-0.3-0.3-0.7 0-0.4 0.3-0.7 0.3-0.3 0.7-0.3 0.4 0 0.7 0.3z"/>
+            </svg>
+            `
+        },
+    }
+}
+
 const STREETVIEW_SCENES = new Map<string, Record<string, any>>([
-    // ['SeaOfNurnen', {}],
-    // ['CirithGorgor', {}],
-    // ['Bree', {}],
-    // ['BrandywineBridge', {}],
-    ['TomBombadil', {}]
+    ['BrandywineBridge', {
+        dummy: -40,
+        hotSpots: [
+            hotspot(170, -20, 'Stock', -90, 0.8),
+        ]
+    }],
+    ['Stock', {
+        dummy: -70,
+        hotSpots: [
+            hotspot(0, -15, 'BrandywineBridge', -90),
+            hotspot(225, -8, 'Frogmorton', -68, 0.8),
+        ]
+    }],
+    ['Frogmorton', {
+        dummy: -90,
+        hotSpots: [
+            hotspot(170, -8, 'Hobbiton', -80, 0.8),
+            hotspot(100, 3, 'Stock', 200, 0.5),
+        ]
+    }],
+    ['Hobbiton', {
+        dummy: -100,
+        hotSpots: [
+            hotspot(5, -5, 'BagEnd', -35, 0.5),
+            hotspot(103, -12, 'Frogmorton', -35, 0.8),
+        ]
+    }],
+    ['BagEnd', {
+        dummy: -90,
+        hotSpots: [
+            hotspot(69, -10, 'Hobbiton', -90)
+        ]
+    }],
+    ['TomBombadil', {
+        dummy: -45,
+
+    }],
 ]);
+const streetviewLastFOV = new Map<string, [number, number]>();
+
 const panellum = (window as any).pannellum.viewer($streetviewPanellum, {
     autoLoad: false,
     showZoomCtrl: false,
@@ -106,8 +174,14 @@ function startDraggingPanellum() {
 }
 
 function updateDraggingPanellum() {
-    const angle = -panellum.getYaw() - panellum.getNorthOffset();
-    $streetviewMinimapCompass.style.setProperty('--rotation', `${angle}deg`);
+    const yaw = panellum.getYaw();
+    const pitch = panellum.getPitch();
+
+    if (showingStreetView) {
+        streetviewLastFOV.set(showingStreetView, [yaw, pitch]);
+    }
+
+    $streetviewMinimapCompass.style.setProperty('--rotation', `${streetviewDummyOffset + yaw}deg`);
 }
 
 function stopDraggingPanellum() {
@@ -121,14 +195,27 @@ panellum.on('mouseup', () => stopDraggingPanellum());
 panellum.on('touchend', () => stopDraggingPanellum());
 
 panellum.on('animatefinished', () => updateDraggingPanellum());
+panellum.on('load', () => {
+    if (showingStreetView && streetviewLastFOV.has(showingStreetView)) {
+        const [yaw, pitch] = streetviewLastFOV.get(showingStreetView)!;
+
+        panellum.setYaw(yaw, false);
+        panellum.setPitch(pitch, false);
+    }
+})
 
 let showingStreetView: string | undefined;
+let streetviewDummyOffset = 0;
 function showStreetView(id: string) {
     closeExploreMenu();
 
     if (id === showingStreetView) return;
-    if (!STREETVIEW_SCENES.has(id)) return;
 
+    const opts = STREETVIEW_SCENES.get(id);
+
+    if (!opts) return;
+
+    streetviewDummyOffset = opts.dummy || 0;
     $streetviewExplore.style.paddingLeft = '220px';
     $streetviewMinimap.style.display = '';
     $streetview.style.display = '';
@@ -152,6 +239,7 @@ function closeStreetView() {
     $streetview.style.display = 'none';
     $streetviewDummy.style.display = '';
     showingStreetView = undefined;
+    streetviewLastFOV.clear();
     saveStreetView('');
 }
 
@@ -175,6 +263,20 @@ function autoShowStreetView(id: string) {
     map.once('moveend', () => {
         const coords = map.latLngToContainerPoint(marker?.getLatLng());
         showStreetView(id);
+        setStreetViewMinimap(coords.x, coords.y);
+    });
+}
+
+function autoShowStreetViewBackground(id: string) {
+    const marker = allPlaceMarkers.get(id);
+
+    if (!marker) return;
+
+    focusOnMarker(id, false);
+    showStreetView(id);
+
+    map.once('moveend', () => {
+        const coords = map.latLngToContainerPoint(marker?.getLatLng());
         setStreetViewMinimap(coords.x, coords.y);
     });
 }
@@ -336,7 +438,7 @@ const StreetviewControl = L.Control.extend({
                     const mouseLat = mouseLatLng.lat.toFixed(4);
                     const mouseLng = mouseLatLng.lng.toFixed(4);
 
-                    let foundId = ''
+                    const foundIds: Array<[number, string]> = [];
 
                     for (const [id, marker] of allPlaceMarkers) {
                         const markerLatLng = marker.getLatLng();
@@ -346,24 +448,32 @@ const StreetviewControl = L.Control.extend({
 
                         if (!STREETVIEW_SCENES.has(id)) continue;
 
-                        if (foundId && markerLatLng.lat.toFixed(4) === mouseLat && markerLatLng.lng.toFixed(4) === mouseLng) {
-                            foundId = id;
-                        } else if (props.regionLayer) {
-                            const regionLayer = props.regionLayer as L.Polygon | L.Circle | undefined;
-                            regionLayer?.setStyle(STYLE_TRANSPARENT);
+                        const isNear = markerLatLng.lat.toFixed(4) === mouseLat && markerLatLng.lng.toFixed(4) === mouseLng;
 
-                            if (!foundId && regionLayer && layerContainsPoint(regionLayer, mouseLatLng)) {
-                                foundId = id;
+                        const regionLayer = props.regionLayer as L.Polygon | L.Circle | undefined;
+                        regionLayer?.setStyle(STYLE_TRANSPARENT);
+
+                        if (isNear) {
+                            const distance = markerLatLng.distanceTo(mouseLatLng);
+
+                            foundIds.push([distance, id]);
+                        } else if (regionLayer) {
+                            const bounds = regionLayer.getBounds();
+                            const width = bounds.getEast() - bounds.getWest();
+                            const height = bounds.getNorth() - bounds.getSouth();
+
+                            if (layerContainsPoint(regionLayer, mouseLatLng)) {
+                                foundIds.push([Math.max(width, height), id])
                             }
                         }
-
-
                     }
 
-                    if (!foundId) {
+                    if (!foundIds.length) {
                         showSidebar(sidebarSelectedID);
                         return;
                     }
+
+                    const foundId = foundIds.sort((a, b) => a[0] - b[0])[0][1];
 
                     $searchbarFormInput.value = placeDatabase[foundId]?.searchname ?? '';
 
