@@ -376,13 +376,6 @@ function toggleExploreMenu() {
 
 $streetviewExploreButton.addEventListener('click', () => toggleExploreMenu());
 
-$sidebar.style.display = '';
-// $streetview.style.display = '';
-$streetviewControl.style.display = '';
-$streetviewMinimap.style.display = '';
-$searchbar.style.display = '';
-$footer.style.display = '';
-
 const ZOOM_MAX = 22;
 const ZOOM_MIN = 15.58;
 
@@ -396,6 +389,15 @@ const map = new LeafletMap($app, {
     boxZoom: false,
     keyboard: false,
 });
+
+map.once('load', () => {
+    $sidebar.style.display = '';
+    // $streetview.style.display = '';
+    $streetviewControl.style.display = '';
+    // $streetviewMinimap.style.display = '';
+    $searchbar.style.display = '';
+    $footer.style.display = '';
+})
 
 map.attributionControl.setPrefix('Made using Leaflet. Map data by Arda Maps. Middle-Earth Maps is not affiliated with the aforementioned, Middle-Earth Enterprises, the Tolkien State nor Google Maps.');
 
