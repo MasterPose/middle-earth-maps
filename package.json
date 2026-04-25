@@ -9,7 +9,6 @@
     "devDependencies": {
         "@types/dom-to-image": "^2.6.7",
         "@types/leaflet": "^1.9.21",
-        "@types/shpjs": "^3.4.7",
         "papaparse": "^5.5.3",
         "playwright": "^1.58.2",
         "playwright-extra": "^4.3.6",
@@ -17,16 +16,17 @@
         "terser": "^5.46.0",
         "typescript": "~5.9.3",
         "unplugin-detect-duplicated-deps": "^2.0.0",
-        "vite": "^7.3.1",
+        "vite": "^8.0.10",
         "vite-plugin-html": "^3.2.2",
-        "vite-plugin-singlefile-compression": "^2.0.13"
+        "vite-plugin-singlefile-compression": "^2.4.0"
     },
     "dependencies": {
-        "dom-to-image-more": "^3.7.2",
-        "interactjs": "^1.10.27",
+        "@interactjs/actions": "^1.10.27",
+        "@interactjs/auto-start": "^1.10.27",
+        "@interactjs/interact": "^1.10.27",
+        "@interactjs/modifiers": "^1.10.27",
         "leaflet": "^1.9.4",
-        "minisearch": "^7.2.0",
         "pannellum": "^2.5.7",
-        "shpjs": "^6.2.0"
+        "slimsearch": "^2.3.0"
     }
 }

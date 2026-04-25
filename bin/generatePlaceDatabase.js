@@ -5,6 +5,7 @@ import Papa from 'papaparse';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import MiniSearch from 'minisearch';
+import { addAll, createIndex } from 'slimsearch';
 
 const CSV_PATH = join(import.meta.dirname, '../src/data/Location.csv');
 
@@ -71,13 +72,11 @@ locationCsvDB.forEach(({ uniquename, name, searchname, significance, altname, ga
     }
 })
 
-const miniSearch = new MiniSearch({
+const searchIndex = createIndex({
     fields: ['name', 'searchAltname', 'searchRegion'],
     storeFields: ['searchname', 'region']
 });
-miniSearch.addAll(Object.values(database));
-const searchIndex = miniSearch.toJSON();
-
+addAll(searchIndex, Object.values(database));
 
 writeFileSync(DATABASE_PATH, JSON.stringify(database));
 writeFileSync(ID_LIST_PATH, Object.keys(database).join('\n'));

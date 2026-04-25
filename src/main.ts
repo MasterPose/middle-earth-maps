@@ -1,69 +1,66 @@
 import type { Feature, Geometry, GeometryObject, Point } from 'geojson';
-import * as L from 'leaflet';
+
+
 import './style.css'
-import MiniSearch from 'minisearch';
-import interact from 'interactjs';
-import domToImage from 'dom-to-image-more';
+// import MiniSearch from 'minisearch';
 
-import 'pannellum';
-import 'pannellum/src/css/pannellum.css';
+import { $, $create, body } from './utils/dom.js';
+import { clampYaw, max, min, round } from './utils/math.js';
+import { raf } from './utils/timing.js';
 
-import './vendor/Leaflet.PointInPolygon.js';
+import {
+    search as slimSearch,
+    loadJSONIndexAsync,
+    type SearchIndex,
+} from 'slimsearch'
+
+import './libs/pannellum.js';
+import { toBlob } from './libs/dom-to-image-more.js';
+import { L } from './libs/leaflet.js';
+import { interact } from './libs/interact.js';
 
 const EMPTY_ARR: never[] = [];
 
-const $app = document.querySelector<HTMLDivElement>('#app')!;
-const $sidebar = document.querySelector<HTMLDivElement>('#sidebar')!;
-const $sidebarName = $sidebar.querySelector<HTMLHeadingElement>('header>.title>h2')!;
-const $sidebarRegion = $sidebar.querySelector<HTMLHeadingElement>('header>.title>p')!;
+const $app = $<HTMLDivElement>('#app');
+const $sidebar = $<HTMLDivElement>('#sidebar');
+const $sidebarName = $<HTMLHeadingElement>('header>.title>h2', $sidebar);
+const $sidebarRegion = $<HTMLHeadingElement>('header>.title>p', $sidebar);
 
-// const $sidebarMainPicture = $sidebar.querySelector<HTMLDivElement>('.picture')!;
-const $sidebarMainPictureImage = $sidebar.querySelector<HTMLImageElement>('.picture>img')!;
+// const $sidebarMainPicture = $<HTMLDivElement>('.picture'), $sidebar!;
+const $sidebarMainPictureImage = $<HTMLImageElement>('.picture>img', $sidebar);
 
-// const $sidebarData = $sidebar.querySelector<HTMLDivElement>('#basic-data')!;
-const $sidebarDataTitle = $sidebar.querySelector<HTMLParagraphElement>('#basic-data-title')!;
-const $sidebarDataDescription = $sidebar.querySelector<HTMLParagraphElement>('#basic-data>p')!;
-const $sidebarDataLearnMore = $sidebar.querySelector<HTMLAnchorElement>('#basic-data>a')!;
+// const $sidebarData = $<HTMLDivElement>('#basic-data', $sidebar);
+const $sidebarDataTitle = $<HTMLParagraphElement>('#basic-data-title', $sidebar);
+const $sidebarDataDescription = $<HTMLParagraphElement>('#basic-data>p', $sidebar);
+const $sidebarDataLearnMore = $<HTMLAnchorElement>('#basic-data>a', $sidebar);
 
-const $sidebarMedia = $sidebar.querySelector<HTMLDivElement>('#media')!;
-const $sidebarMediaGallery = $sidebar.querySelector<HTMLDivElement>('#media>.gallery')!;
+const $sidebarMedia = $<HTMLDivElement>('#media', $sidebar);
+const $sidebarMediaGallery = $<HTMLDivElement>('#media>.gallery', $sidebar);
 
-const $sidebarKnownAs = $sidebar.querySelector<HTMLDivElement>('#also-known')!;
-const $sidebarKnownAsList = $sidebar.querySelector<HTMLUListElement>('#also-known>ul')!;
+const $sidebarKnownAs = $<HTMLDivElement>('#also-known', $sidebar);
+const $sidebarKnownAsList = $<HTMLUListElement>('#also-known>ul', $sidebar);
 
-const $searchbar = document.querySelector<HTMLDivElement>('#searchbar')!;
-const $searchbarForm = $searchbar.querySelector<HTMLFormElement>('form')!;
-const $searchbarFormInput = $searchbarForm.querySelector<HTMLInputElement>('input')!;
-const $searchbarList = $searchbar.querySelector<HTMLUListElement>('ul')!;
+const $searchbar = $<HTMLDivElement>('#searchbar');
+const $searchbarForm = $<HTMLFormElement>('form', $searchbar);
+const $searchbarList = $<HTMLUListElement>('ul', $searchbar);
+const $searchbarFormInput = $<HTMLInputElement>('input', $searchbarForm);
 
-const $footer = document.querySelector<HTMLDivElement>('#footer')!;
+const $footer = $<HTMLDivElement>('#footer');
 
-const $streetview = document.querySelector<HTMLDivElement>('#streetview')!;
-const $streetviewPanellum = $streetview.querySelector<HTMLDivElement>('div')!;
+const $streetview = $<HTMLDivElement>('#streetview');
+const $streetviewPanellum = $<HTMLDivElement>('div', $streetview);
 
-const $streetviewControl = document.querySelector<HTMLDivElement>('#streetview-control')!;
-const $streetviewMinimap = document.querySelector<HTMLDivElement>('#streetview-minimap')!;
-const $streetviewMinimapImage = $streetviewMinimap.querySelector<HTMLImageElement>('#streetview-minimap-image')!;
-const $streetviewMinimapCompass = $streetviewMinimap.querySelector<HTMLImageElement>('#streetview-minimap-compass')!;
+const $streetviewControl = $<HTMLDivElement>('#streetview-control');
+const $streetviewMinimap = $<HTMLDivElement>('#streetview-minimap');
+const $streetviewMinimapImage = $<HTMLImageElement>('#streetview-minimap-image', $streetviewMinimap);
+const $streetviewMinimapCompass = $<HTMLImageElement>('#streetview-minimap-compass', $streetviewMinimap);
 
-const $streetviewDummy = $streetviewControl.querySelector<HTMLButtonElement>('#streetview-dummy')!;
-const $streetviewDummyImage = $streetviewDummy.querySelector<HTMLImageElement>('img')!;
+const $streetviewDummy = $<HTMLButtonElement>('#streetview-dummy', $streetviewControl);
+const $streetviewDummyImage = $<HTMLImageElement>('img', $streetviewDummy);
 
-const $streetviewExploreButton = $streetviewControl.querySelector<HTMLButtonElement>('#streetview-explore-button')!;
-const $streetviewExplore = $streetviewControl.querySelector<HTMLDivElement>('#streetview-explore')!;
-const $streetviewExploreList = $streetviewExplore.querySelector<HTMLDivElement>('ul')!;
-
-// function hotspot(hotSpotDiv: HTMLDivElement, args: string) {
-//     hotSpotDiv.classList.add('custom-tooltip');
-//     var span = document.createElement('span');
-//     span.innerHTML = args;
-//     hotSpotDiv.appendChild(span);
-//     span.style.width = span.scrollWidth - 20 + 'px';
-//     span.style.marginLeft = -(span.scrollWidth - hotSpotDiv.offsetWidth) / 2 + 'px';
-//     span.style.marginTop = -span.scrollHeight - 12 + 'px';
-// }
-
-const clampYaw = (angle: number) => ((angle + 180) % 360) - 180;
+const $streetviewExploreButton = $<HTMLButtonElement>('#streetview-explore-button', $streetviewControl);
+const $streetviewExplore = $<HTMLDivElement>('#streetview-explore', $streetviewControl);
+const $streetviewExploreList = $<HTMLDivElement>('ul', $streetviewExplore);
 
 function hotspot(
     yaw = 0,
@@ -74,8 +71,8 @@ function hotspot(
 ) {
     yaw = clampYaw(yaw);
 
-    const popupContainer = document.createElement('div');
-    const arrowContainer = document.createElement('div');
+    const popupContainer = $create('div');
+    const arrowContainer = $create('div');
     return {
         text: {
             [Symbol.toPrimitive]() {
@@ -99,8 +96,8 @@ function hotspot(
             arrowContainer.style.transform = `rotateX(60deg) rotateZ(${degrees}deg)`;
             arrowContainer.innerHTML = `
             <svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 14"
-                width="${Math.round(80 * scale)}"
-                height="${Math.round(140 * scale)}"
+                width="${round(80 * scale)}"
+                height="${round(140 * scale)}"
                 fill="currentColor">
                 <path  d="m1.7 0.3l6 6q0.1 0.1 0.2 0.3 0.1 0.2 0.1 0.4 0 0.2-0.1 0.4-0.1 0.2-0.2 0.3l-6 6q-0.3 0.3-0.7 0.3-0.4 0-0.7-0.3-0.3-0.3-0.3-0.7 0-0.4 0.3-0.7l5.3-5.3-5.3-5.3q-0.3-0.3-0.3-0.7 0-0.4 0.3-0.7 0.3-0.3 0.7-0.3 0.4 0 0.7 0.3z"/>
             </svg>
@@ -176,7 +173,7 @@ const panellum = (window as any).pannellum.viewer($streetviewPanellum, {
     showZoomCtrl: false,
     showFullscreenCtrl: false,
     hfov: 120,
-    scenes: Array.from(STREETVIEW_SCENES).reduce((obj: any, [id, opts]) => {
+    scenes: [...STREETVIEW_SCENES].reduce((obj: any, [id, opts]) => {
         obj[id] = {
             ...opts,
             panorama: `./images/panoramas/${id}.webp`,
@@ -186,8 +183,8 @@ const panellum = (window as any).pannellum.viewer($streetviewPanellum, {
         return obj;
     }, {})
 });
-const $panellumDragFix = document.querySelector<HTMLDivElement>('.pnlm-dragfix');
-const $panellumAboutMsg = document.querySelector<HTMLDivElement>('.pnlm-about-msg');
+const $panellumDragFix = $<HTMLDivElement>('.pnlm-dragfix');
+const $panellumAboutMsg = $<HTMLDivElement>('.pnlm-about-msg');
 
 $panellumDragFix?.addEventListener('contextmenu', () => {
     if (!$panellumAboutMsg) return;
@@ -203,9 +200,9 @@ function startDraggingPanellum() {
     const tick = () => {
         if (!draggingPanellum) return;
         updateDraggingPanellum();
-        requestAnimationFrame(tick);
+        raf(tick);
     }
-    requestAnimationFrame(tick);
+    raf(tick);
 }
 
 function updateDraggingPanellum() {
@@ -271,7 +268,7 @@ function showStreetView(id: string) {
     $streetviewDummy.style.display = 'none';
     setTimeout(() => {
         panellum.loadScene(id)
-        document.body.classList.add('streetview-opened');
+        body.classList.add('streetview-opened');
     }, 0);
     showingStreetView = id;
     saveStreetView(id);
@@ -292,7 +289,7 @@ function closeStreetView() {
     $streetviewDummy.style.display = '';
     showingStreetView = undefined;
     streetviewLastFOV.clear();
-    document.body.classList.remove('streetview-opened');
+    body.classList.remove('streetview-opened');
     saveStreetView('');
 }
 
@@ -415,7 +412,7 @@ function layerContainsPoint(layer: any, latLng: L.LatLngExpression) {
 function setStreetViewMinimap(containerX: number, containerY: number) {
     $streetviewMinimapImage.src = '';
 
-    domToImage.toBlob(map.getContainer(), {
+    toBlob(map.getContainer(), {
         quality: 0.7,
         skipFonts: true,
         width: 200,
@@ -437,7 +434,7 @@ function setStreetViewMinimap(containerX: number, containerY: number) {
 
         const url = URL.createObjectURL(v)
         $streetviewMinimapImage.src = url;
-    });
+    }).catch(console.error);
 }
 
 let draggingStreetview = false;
@@ -446,13 +443,13 @@ const StreetviewControl = L.Control.extend({
         const div = L.DomUtil.create('div');
         div.classList.add('leaflet-control-streetview');
         interact($streetviewDummy).draggable({
-            inertia: false,
-            modifiers: [
-                // interact.modifiers.restrictRect({
-                //     restriction: 'parent',
-                //     endOnly: true,
-                // }),
-            ],
+            // inertia: false,
+            // modifiers: [
+            //     // interact.modifiers.restrictRect({
+            //     //     restriction: 'parent',
+            //     //     endOnly: true,
+            //     // }),
+            // ],
             listeners: {
                 start: () => {
                     draggingStreetview = true;
@@ -519,7 +516,7 @@ const StreetviewControl = L.Control.extend({
                             const height = bounds.getNorth() - bounds.getSouth();
 
                             if (layerContainsPoint(regionLayer, mouseLatLng)) {
-                                foundIds.push([Math.max(width, height), id])
+                                foundIds.push([max(width, height), id])
                             }
                         }
                     }
@@ -556,7 +553,10 @@ const StreetviewControl = L.Control.extend({
 (new SocialControl({ position: 'bottomleft' })).addTo(map);
 (new StreetviewControl({ position: 'bottomright' })).addTo(map);
 
-let miniSearch: MiniSearch;
+let searchIndex: SearchIndex<string, any, {
+    searchname: string,
+    region: string,
+}>;
 let lastSearchTerm: string;
 
 class QueryBuilder {
@@ -565,7 +565,7 @@ class QueryBuilder {
     private static timeoutId: number | undefined;
 
     static refresh() {
-        this.url = new URL(window.location.href);
+        this.url = new URL(location.href);
         this.params = this.url.searchParams;
     }
 
@@ -603,7 +603,7 @@ class QueryBuilder {
 
         this.timeoutId = setTimeout(() => {
             this.timeoutId = undefined;
-            window.history.pushState({ path: this.url.href }, '', this.url.href);
+            history.pushState({ path: this.url.href }, '', this.url.href);
         }, 0);
     }
 }
@@ -629,12 +629,15 @@ function search(term: string) {
         return;
     }
 
-    const result = miniSearch.search(term, {
+    const result = slimSearch(searchIndex, term, {
         fuzzy: 0.5,
         boost: {
             'name': 2,
         },
     }).slice(0, 10).filter((v) => allPlaceMarkers.has(v.id));
+
+    console.log(result);
+
 
     if (result.length) {
         $searchbar.classList.add('has-items');
@@ -652,11 +655,16 @@ function focusOnMarker(id?: string, sidebar: boolean = true) {
     if (!marker) return;
 
     // @ts-expect-error
-    map.setView(marker.getLatLng(), Math.max(map.getZoom(), marker.options.minZoom));
+    map.setView(marker.getLatLng(), max(map.getZoom(), marker.options.minZoom));
     if (sidebar) showSidebar(id);
 }
 
-fetch('search.json').then((v) => v.text()).then((searchIndex) => {
+fetch('search.json').then(async (data) => {
+    searchIndex = await loadJSONIndexAsync(await data.text(), {
+        fields: ['name', 'searchAltname', 'searchRegion'],
+        storeFields: ['name', 'region']
+    });
+
     $searchbar.addEventListener('click', (e) => {
         const target = e.target as HTMLElement | null;
 
@@ -666,11 +674,6 @@ fetch('search.json').then((v) => v.text()).then((searchIndex) => {
 
         focusOnMarker(target.dataset.id);;
     });
-    miniSearch = MiniSearch.loadJSON(searchIndex, {
-        fields: ['name', 'searchAltname', 'searchRegion'],
-        storeFields: ['name', 'region']
-    });
-
 
     $searchbarForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -679,9 +682,9 @@ fetch('search.json').then((v) => v.text()).then((searchIndex) => {
     })
     $searchbarFormInput.addEventListener('focus', () => search($searchbarFormInput.value));
     $searchbarFormInput.addEventListener('input', () => search($searchbarFormInput.value));
+    $searchbar.classList.remove('hidden');
 }).catch((e) => {
     console.error(e);
-    $searchbar.classList.add('hidden');
 });
 
 L.control.zoom({
@@ -870,10 +873,10 @@ const PlaceMarker = L.Marker.extend({
         ].includes(type)
 
         const size = withoutIcon
-            ? Math.max(featureProps.size ?? 2, 2)
+            ? max(featureProps.size ?? 2, 2)
             : (featureProps.size ?? 0);
 
-        const minZoom: number = Math.min(ZOOM_MIN + zoom - Math.min(size, 2), 19);
+        const minZoom: number = min(ZOOM_MIN + zoom - min(size, 2), 19);
 
         this.feature = feature;
 
@@ -882,7 +885,7 @@ const PlaceMarker = L.Marker.extend({
             let radius: number | undefined;
 
             if (type === 'point_city') {
-                radius = Math.max(feature.properties.size * 5, 2);
+                radius = max(feature.properties.size * 5, 2);
             } else if (STREETVIEW_SCENES.has(id)) {
                 radius = 2
             }
@@ -950,7 +953,7 @@ const PlaceMarker = L.Marker.extend({
 
 function refreshPlaceMarkers() {
     const zoom = map.getZoom();
-    const width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+    const width = innerWidth || body.clientWidth;
     const deviceZoomExtra = width < 800 ? 0.25 : 0;
 
     allPlaceMarkers.forEach((marker, id) => {
@@ -986,9 +989,9 @@ function checkQuery() {
     }
 }
 
-window.addEventListener('popstate', () => setTimeout(() => checkQuery(), 10));
+addEventListener('popstate', () => setTimeout(() => checkQuery(), 10));
 
-window.addEventListener('click', (e) => {
+addEventListener('click', (e) => {
     if (!lastSearchTerm) return;
 
     const target = e.target as HTMLElement | null;

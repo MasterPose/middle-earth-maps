@@ -1,9 +1,9 @@
-import { defineConfig } from "vite";
-import viteSingleFileCompression from "vite-plugin-singlefile-compression";
+import { UserConfig } from "vite";
 import { createHtmlPlugin } from 'vite-plugin-html';
 import viteDetectDuplicatedDeps from 'unplugin-detect-duplicated-deps/vite';
+import viteSingleFileCompression from 'vite-plugin-singlefile-compression'
 
-export default defineConfig({
+export default {
     root: "./src",
     publicDir: '../public',
     build: {
@@ -17,14 +17,17 @@ export default defineConfig({
                 hoist_funs: true,
                 hoist_vars: true,
                 keep_fargs: false,
-                passes: 3,
+                passes: 5,
             },
             format: {
                 comments: false,
             }
         },
-        rollupOptions: {
-            treeshake: 'recommended',
+        rolldownOptions: {
+            checks: {
+                pluginTimings: false
+            },
+            treeshake: true,
         }
     },
     plugins: [
@@ -32,5 +35,5 @@ export default defineConfig({
         viteDetectDuplicatedDeps(),
         viteSingleFileCompression(),
     ],
-});
+} satisfies UserConfig
 
