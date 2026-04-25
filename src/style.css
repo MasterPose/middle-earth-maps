@@ -576,9 +576,14 @@ button#streetview-dummy {
 #streetview-explore {
     display: none;
     padding: 10px;
+    padding-bottom: 24px;
     background-color: #fff;
     box-shadow: 0px -2px 3px rgba(0, 0, 0, 0.1);
     width: 100vw;
+}
+
+.streetview-opened #streetview-explore {
+    padding-bottom: 10px;
 }
 
 #streetview-explore ul {
@@ -649,12 +654,60 @@ button#streetview-dummy {
     display: inline-block;
 }
 
-.streetview-hotspot {
+.streetview-hotspot>:last-child {
     color: #fff;
     opacity: 0.33;
+    transition: opacity 0.3s ease;
 }
 
-.streetview-hotspot:hover {
+.streetview-hotspot:hover>:last-child {
     color: #fff;
     opacity: 0.5;
+    transition: opacity 0.3s ease;
+}
+
+.streetview-hotspot-popup {
+    position: absolute;
+    color: #fff;
+    font-family: 'Google Sans';
+    font-size: 20px;
+    opacity: 0;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    transition: opacity 0.3s ease;
+    text-align: center;
+    width: 200px;
+}
+
+@keyframes streetview-hotspot-popup-temp-focus {
+    0% {
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 0.9;
+    }
+
+    90% {
+        opacity: 0.9;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+.streetview-hotspot-popup.temp-focus {
+    animation: streetview-hotspot-popup-temp-focus 1s normal;
+}
+
+.streetview-hotspot:hover>.streetview-hotspot-popup {
+    opacity: 1 !important;
+    transition: opacity 0.3s ease;
+}
+
+.streetview-opened .leaflet-control-zoom,
+.streetview-opened .leaflet-control-attribution {
+    display: none;
 }

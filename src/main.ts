@@ -10,6 +10,8 @@ import 'pannellum/src/css/pannellum.css';
 
 import './vendor/Leaflet.PointInPolygon.js';
 
+const EMPTY_ARR: never[] = [];
+
 const $app = document.querySelector<HTMLDivElement>('#app')!;
 const $sidebar = document.querySelector<HTMLDivElement>('#sidebar')!;
 const $sidebarName = $sidebar.querySelector<HTMLHeadingElement>('header>.title>h2')!;
@@ -61,6 +63,8 @@ const $streetviewExploreList = $streetviewExplore.querySelector<HTMLDivElement>(
 //     span.style.marginTop = -span.scrollHeight - 12 + 'px';
 // }
 
+const clampYaw = (angle: number) => ((angle + 180) % 360) - 180;
+
 function hotspot(
     yaw = 0,
     pitch = 0,
@@ -68,6 +72,10 @@ function hotspot(
     degrees = 0,
     scale = 1,
 ) {
+    yaw = clampYaw(yaw);
+
+    const popupContainer = document.createElement('div');
+    const arrowContainer = document.createElement('div');
     return {
         text: {
             [Symbol.toPrimitive]() {
@@ -78,12 +86,18 @@ function hotspot(
         yaw,
         cssClass: "streetview-hotspot",
         clickHandlerFunc: () => id && autoShowStreetViewBackground(id),
+        popupContainer,
+        arrowContainer,
         createTooltipFunc: (root: HTMLDivElement) => {
-            const container = document.createElement('div');
-            root.appendChild(container);
+            const name = placeDatabase[id].name;
+            popupContainer.classList.add('streetview-hotspot-popup')
+            popupContainer.innerHTML = `
+            ${name}
+            `
+            root.appendChild(popupContainer);
 
-            container.style.transform = `rotateX(60deg) rotateZ(${degrees}deg)`;
-            container.innerHTML = `
+            arrowContainer.style.transform = `rotateX(60deg) rotateZ(${degrees}deg)`;
+            arrowContainer.innerHTML = `
             <svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 14"
                 width="${Math.round(80 * scale)}"
                 height="${Math.round(140 * scale)}"
@@ -91,15 +105,37 @@ function hotspot(
                 <path  d="m1.7 0.3l6 6q0.1 0.1 0.2 0.3 0.1 0.2 0.1 0.4 0 0.2-0.1 0.4-0.1 0.2-0.2 0.3l-6 6q-0.3 0.3-0.7 0.3-0.4 0-0.7-0.3-0.3-0.3-0.3-0.7 0-0.4 0.3-0.7l5.3-5.3-5.3-5.3q-0.3-0.3-0.3-0.7 0-0.4 0.3-0.7 0.3-0.3 0.7-0.3 0.4 0 0.7 0.3z"/>
             </svg>
             `
+            root.appendChild(arrowContainer);
         },
     }
 }
 
 const STREETVIEW_SCENES = new Map<string, Record<string, any>>([
-    ['BrandywineBridge', {
-        dummy: -40,
+    ['BagEnd', {
+        dummy: -90,
         hotSpots: [
-            hotspot(170, -20, 'Stock', -90, 0.8),
+            hotspot(69, -10, 'Hobbiton', -90)
+        ]
+    }],
+    ['Hobbiton', {
+        dummy: -100,
+        hotSpots: [
+            hotspot(5, -5, 'BagEnd', -35, 0.5),
+            hotspot(103, -12, 'Bywater', -35, 0.8),
+        ]
+    }],
+    ['Bywater', {
+        dummy: 90,
+        hotSpots: [
+            hotspot(45, -10, 'Hobbiton', -90),
+            hotspot(-110, -10, 'Frogmorton', -90),
+        ]
+    }],
+    ['Frogmorton', {
+        dummy: -90,
+        hotSpots: [
+            hotspot(170, -8, 'Bywater', -80, 0.8),
+            hotspot(100, 3, 'Stock', 200, 0.5),
         ]
     }],
     ['Stock', {
@@ -109,24 +145,23 @@ const STREETVIEW_SCENES = new Map<string, Record<string, any>>([
             hotspot(225, -8, 'Frogmorton', -68, 0.8),
         ]
     }],
-    ['Frogmorton', {
-        dummy: -90,
+    ['BrandywineBridge', {
+        dummy: -40,
         hotSpots: [
-            hotspot(170, -8, 'Hobbiton', -80, 0.8),
-            hotspot(100, 3, 'Stock', 200, 0.5),
+            hotspot(170, -20, 'Stock', -90, 0.8),
+            hotspot(10, -10, 'Bucklebury', -90, 0.8),
         ]
     }],
-    ['Hobbiton', {
-        dummy: -100,
+    ['Bucklebury', {
         hotSpots: [
-            hotspot(5, -5, 'BagEnd', -35, 0.5),
-            hotspot(103, -12, 'Frogmorton', -35, 0.8),
+            hotspot(-10, -20, 'BrandywineBridge', -90, 0.8),
+            hotspot(135, -20, 'BrandyHall', -90, 0.8),
         ]
     }],
-    ['BagEnd', {
-        dummy: -90,
+    ['BrandyHall', {
+        dummy: -80,
         hotSpots: [
-            hotspot(69, -10, 'Hobbiton', -90)
+            hotspot(180, -20, 'Bucklebury', -90, 1),
         ]
     }],
     ['TomBombadil', {
@@ -177,6 +212,20 @@ function updateDraggingPanellum() {
     const yaw = panellum.getYaw();
     const pitch = panellum.getPitch();
 
+    const hotspots: Array<{ pitch: number, yaw: number, popupContainer: HTMLDivElement | undefined }> = STREETVIEW_SCENES.get(panellum.getScene())?.hotSpots ?? EMPTY_ARR;
+    hotspots.forEach((hotsPot) => {
+        if (hotsPot.popupContainer) {
+            const dist = Math.sqrt((hotsPot.yaw - yaw) ** 2 + (hotsPot.pitch - pitch) ** 2);
+            const hasFocus = hotsPot.popupContainer.classList.contains('temp-focus');
+
+            if (dist < 20 && !hasFocus) {
+                hotsPot.popupContainer.classList.add('temp-focus');
+            } else if (dist > 100 && hasFocus) {
+                hotsPot.popupContainer.classList.remove('temp-focus');
+            }
+        }
+    })
+
     if (showingStreetView) {
         streetviewLastFOV.set(showingStreetView, [yaw, pitch]);
     }
@@ -216,11 +265,14 @@ function showStreetView(id: string) {
     if (!opts) return;
 
     streetviewDummyOffset = opts.dummy || 0;
-    $streetviewExplore.style.paddingLeft = '220px';
     $streetviewMinimap.style.display = '';
+    $streetviewMinimap.style.marginBottom = '';
     $streetview.style.display = '';
     $streetviewDummy.style.display = 'none';
-    setTimeout(() => panellum.loadScene(id), 0);
+    setTimeout(() => {
+        panellum.loadScene(id)
+        document.body.classList.add('streetview-opened');
+    }, 0);
     showingStreetView = id;
     saveStreetView(id);
 }
@@ -240,6 +292,7 @@ function closeStreetView() {
     $streetviewDummy.style.display = '';
     showingStreetView = undefined;
     streetviewLastFOV.clear();
+    document.body.classList.remove('streetview-opened');
     saveStreetView('');
 }
 
@@ -282,6 +335,7 @@ function autoShowStreetViewBackground(id: string) {
 }
 
 function closeExploreMenu() {
+    $streetviewMinimap.style.marginBottom = '';
     $streetviewControl.classList.remove('explore');
 }
 
@@ -290,6 +344,8 @@ function toggleExploreMenu() {
         closeExploreMenu();
     } else {
         let html = '';
+
+        $streetviewMinimap.style.marginBottom = '132px';
 
         allPlaceMarkers.forEach((marker, id) => {
             if (!STREETVIEW_SCENES.has(id)) return;
