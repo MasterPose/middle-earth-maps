@@ -2,7 +2,6 @@ import type { Feature, Geometry, GeometryObject, Point } from 'geojson';
 
 
 import './style.css'
-// import MiniSearch from 'minisearch';
 
 import { $, $create, body } from './utils/dom.js';
 import { clampYaw, max, min, round } from './utils/math.js';
@@ -16,8 +15,19 @@ import {
 
 import './libs/pannellum.js';
 import { toBlob } from './libs/dom-to-image-more.js';
-import { L } from './libs/leaflet.js';
+import {
+    Control,
+    DomUtil,
+    LatLng,
+    Map as LeafletMap,
+    Circle,
+    Marker,
+    DivIcon,
+    LatLngBounds,
+    GeoJSON
+} from './libs/leaflet.js';
 import { interact } from './libs/interact.js';
+import type { GeoJSONOptions, LatLngExpression, Layer, MarkerOptions, PathOptions, Polygon } from 'leaflet';
 
 const EMPTY_ARR: never[] = [];
 
@@ -376,17 +386,20 @@ $footer.style.display = '';
 const ZOOM_MAX = 22;
 const ZOOM_MIN = 15.58;
 
-const map = L.map($app, {
+const map = new LeafletMap($app, {
     center: [0, 0],
     maxZoom: ZOOM_MAX,
     minZoom: ZOOM_MIN,
     zoomSnap: 0,
     zoomDelta: 0.25,
     zoomControl: false,
+    boxZoom: false,
+    keyboard: false,
 });
+
 map.attributionControl.setPrefix('Made using Leaflet. Map data by Arda Maps. Middle-Earth Maps is not affiliated with the aforementioned, Middle-Earth Enterprises, the Tolkien State nor Google Maps.');
 
-const StreetviewMinimapControl = L.Control.extend({
+const StreetviewMinimapControl = Control.extend({
     onAdd: function () {
         $streetviewMinimap.style.display = 'none';
         return $streetviewMinimap;
@@ -394,9 +407,9 @@ const StreetviewMinimapControl = L.Control.extend({
     onRemove: function () { }
 });
 
-const SocialControl = L.Control.extend({
+const SocialControl = Control.extend({
     onAdd: function () {
-        const div = L.DomUtil.create('div');
+        const div = DomUtil.create('div');
         div.classList.add('leaflet-control-social');
         div.appendChild($footer)
         return div;
@@ -404,7 +417,7 @@ const SocialControl = L.Control.extend({
     onRemove: function () { }
 });
 
-function layerContainsPoint(layer: any, latLng: L.LatLngExpression) {
+function layerContainsPoint(layer: any, latLng: LatLngExpression) {
     return (layer.contains && layer.contains(latLng))
         || layer.getBounds().contains(latLng);
 }
@@ -438,9 +451,9 @@ function setStreetViewMinimap(containerX: number, containerY: number) {
 }
 
 let draggingStreetview = false;
-const StreetviewControl = L.Control.extend({
+const StreetviewControl = Control.extend({
     onAdd: function () {
-        const div = L.DomUtil.create('div');
+        const div = DomUtil.create('div');
         div.classList.add('leaflet-control-streetview');
         interact($streetviewDummy).draggable({
             // inertia: false,
@@ -460,7 +473,7 @@ const StreetviewControl = L.Control.extend({
 
                         if (!STREETVIEW_SCENES.has(id)) return;
 
-                        (props.regionLayer as L.Polygon | undefined)?.setStyle(STYLE_REGION_STREETVIEW);
+                        (props.regionLayer as Polygon | undefined)?.setStyle(STYLE_REGION_STREETVIEW);
                     })
                 },
                 move: (event: Event & { dx: number, dy: number }) => {
@@ -503,7 +516,7 @@ const StreetviewControl = L.Control.extend({
 
                         const isNear = markerLatLng.lat.toFixed(4) === mouseLat && markerLatLng.lng.toFixed(4) === mouseLng;
 
-                        const regionLayer = props.regionLayer as L.Polygon | L.Circle | undefined;
+                        const regionLayer = props.regionLayer as Polygon | Circle | undefined;
                         regionLayer?.setStyle(STYLE_TRANSPARENT);
 
                         if (isNear) {
@@ -636,9 +649,6 @@ function search(term: string) {
         },
     }).slice(0, 10).filter((v) => allPlaceMarkers.has(v.id));
 
-    console.log(result);
-
-
     if (result.length) {
         $searchbar.classList.add('has-items');
 
@@ -687,7 +697,8 @@ fetch('search.json').then(async (data) => {
     console.error(e);
 });
 
-L.control.zoom({
+
+new Control.Zoom({
     position: 'bottomright'
 }).addTo(map);
 
@@ -732,7 +743,7 @@ function showSidebar(id?: string) {
             // @ts-expect-error
             prevMarker.setZIndexOffset(prevMarker.options.originalZIndex)
 
-            const regionLayer = prevMarker.feature?.properties.regionLayer as L.Polygon | undefined;
+            const regionLayer = prevMarker.feature?.properties.regionLayer as Polygon | undefined;
             if (regionLayer) regionLayer.setStyle(STYLE_TRANSPARENT);
         }
         if (curMarker) {
@@ -740,7 +751,7 @@ function showSidebar(id?: string) {
             curMarkerEl?.classList.add('active');
             curMarker.setZIndexOffset(9999);
 
-            const regionLayer = curMarker.feature?.properties.regionLayer as L.Polygon | undefined;
+            const regionLayer = curMarker.feature?.properties.regionLayer as Polygon | undefined;
             if (regionLayer) {
                 regionLayer.setStyle(STYLE_REGION);
             }
@@ -851,11 +862,11 @@ const PLACE_CONFIG = {
 }
 type PLACE_TYPE = keyof typeof PLACE_CONFIG;
 
-const PlaceMarker = L.Marker.extend({
+const PlaceMarker = Marker.extend({
     initialize: function (
         feature: Feature<Geometry, any>,
-        coords: L.LatLng,
-        opts: L.MarkerOptions = {},
+        coords: LatLng,
+        opts: MarkerOptions = {},
     ) {
         const featureProps = feature.properties;
 
@@ -880,7 +891,7 @@ const PlaceMarker = L.Marker.extend({
 
         this.feature = feature;
 
-        let regionLayer: L.Circle | undefined = featureProps.regionLayer;
+        let regionLayer: Circle | undefined = featureProps.regionLayer;
         if (!regionLayer) {
             let radius: number | undefined;
 
@@ -891,7 +902,7 @@ const PlaceMarker = L.Marker.extend({
             }
 
             if (radius) {
-                regionLayer = featureProps.regionLayer = L.circle(coords, {
+                regionLayer = featureProps.regionLayer = new Circle(coords, {
                     ...STYLE_TRANSPARENT,
                     radius
                 });
@@ -914,13 +925,13 @@ const PlaceMarker = L.Marker.extend({
         html += `<p>${name}</p>`;
         html += `</div>`;
 
-        opts.icon = L.divIcon({
+        opts.icon = new DivIcon({
             html,
             iconSize: [26, 26]
         });
 
         // @ts-expect-error
-        L.Marker.prototype.initialize.call(this, coords, {
+        Marker.prototype.initialize.call(this, coords, {
             ...opts,
             minZoom,
             originalZIndex: zIndex,
@@ -940,7 +951,7 @@ const PlaceMarker = L.Marker.extend({
             showSidebar(id);
 
             map.fitBounds(
-                regionLayer ? regionLayer.getBounds() : L.latLngBounds([this.getLatLng()]), {
+                regionLayer ? regionLayer.getBounds() : new LatLngBounds([this.getLatLng()]), {
                 padding: [50, 50],
                 maxZoom: 20
             });
@@ -949,7 +960,7 @@ const PlaceMarker = L.Marker.extend({
         this.setZIndexOffset(zIndex);
         allPlaceMarkers.set(id, this);
     }
-}) as unknown as new (feature: Feature<Geometry, any>, coords: L.LatLng, opts?: L.MarkerOptions) => L.Marker;
+}) as unknown as new (feature: Feature<Geometry, any>, coords: LatLng, opts?: MarkerOptions) => Marker;
 
 function refreshPlaceMarkers() {
     const zoom = map.getZoom();
@@ -1023,18 +1034,18 @@ map.addEventListener('click', () => {
 
 });
 
-const STYLE_WATER: L.PathOptions = {
+const STYLE_WATER: PathOptions = {
     weight: 1,
     fillOpacity: 1,
     color: '#8ad8ec',
 };
-const STYLE_VEGETATION: L.PathOptions = {
+const STYLE_VEGETATION: PathOptions = {
     stroke: false,
     fillOpacity: 0.5,
     color: '#9ce9bc',
 }
 
-const STYLE_REGION: L.PathOptions = {
+const STYLE_REGION: PathOptions = {
     stroke: true,
     fill: false,
     weight: 2,
@@ -1048,11 +1059,11 @@ const STYLE_REGION_STREETVIEW = {
     dashArray: [],
     color: '#129eaf'
 }
-const STYLE_TRANSPARENT: L.PathOptions = {
+const STYLE_TRANSPARENT: PathOptions = {
     stroke: false,
     fill: false,
 }
-const STYLE_BG: L.PathOptions = {
+const STYLE_BG: PathOptions = {
     fillColor: '#8ad8ec',
     fillOpacity: 1,
     color: '#8ad8ec',
@@ -1061,11 +1072,11 @@ const STYLE_BG: L.PathOptions = {
 let placeDatabase: Record<string, any> = {};
 let placeDatabaseDescriptions: Record<string, any> = {};
 
-function pointToLayer(geoJsonPoint: Feature<Point, any>, latlng: L.LatLng): L.Layer {
+function pointToLayer(geoJsonPoint: Feature<Point, any>, latlng: LatLng): Layer {
     return new PlaceMarker(geoJsonPoint, latlng);
 }
 
-const layersOpts: Record<string, L.GeoJSONOptions | undefined> = {
+const layersOpts: Record<string, GeoJSONOptions | undefined> = {
     poly_ekkaia: {
         style: STYLE_TRANSPARENT
     },
@@ -1146,7 +1157,7 @@ const layersOpts: Record<string, L.GeoJSONOptions | undefined> = {
             feature.properties.regionLayer = layer;
 
             layer.once('add', () => {
-                new PlaceMarker(feature, (layer as L.Polygon).getCenter())
+                new PlaceMarker(feature, (layer as Polygon).getCenter())
             })
         },
     },
@@ -1166,7 +1177,7 @@ Promise.all(layersPromises).then((data) => Object.fromEntries(data)).then(async 
     placeDatabaseDescriptions = await fetch('db-descriptions.json').then((v) => v.json());
 
 
-    const layers: Record<string, L.GeoJSON<any, GeometryObject>> = {};
+    const layers: Record<string, GeoJSON<any, GeometryObject>> = {};
     for (const key in data) {
         const geojson = data[key];
 
@@ -1192,7 +1203,7 @@ Promise.all(layersPromises).then((data) => Object.fromEntries(data)).then(async 
             return false;
         });
 
-        const layer = L.geoJSON(geojson, layersOpts[key]).addTo(map);
+        const layer = new GeoJSON(geojson, layersOpts[key]).addTo(map);
         layers[key] = layer;
     }
 
