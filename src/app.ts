@@ -1,6 +1,3 @@
-import type { Feature, Geometry, GeometryObject, Point } from 'geojson';
-
-
 import './style.css'
 
 import { $, $create, body } from './utils/dom.js';
@@ -30,8 +27,10 @@ import {
     Browser
 } from './libs/leaflet.js';
 import { interact } from './libs/interact.js';
-import type { GeoJSONOptions, LatLngExpression, Layer, MarkerOptions, PathOptions, Polygon } from 'leaflet';
 import { fetchAsJson, fetchAsText } from './utils/data.js';
+
+import type { GeoJSONOptions, LatLngExpression, Layer, MarkerOptions, PathOptions, Polygon } from 'leaflet';
+import type { Feature, FeatureCollection, Geometry, Point } from 'geojson';
 
 const EMPTY_ARR: never[] = [];
 
@@ -90,7 +89,7 @@ function hotspot(
     return {
         text: {
             [Symbol.toPrimitive]() {
-                return placeDatabase[id].name;
+                return placeDatabase[id][1];
             },
         },
         pitch,
@@ -100,7 +99,7 @@ function hotspot(
         popupContainer,
         arrowContainer,
         createTooltipFunc: (root: HTMLDivElement) => {
-            const name = placeDatabase[id].name;
+            const name = placeDatabase[id][1];
             popupContainer.classList.add('streetview-hotspot-popup')
             popupContainer.innerHTML = `
             ${name}
@@ -370,8 +369,8 @@ function toggleExploreMenu() {
 
             html += '<li>';
             html += `<button type="button" data-streetview-id="${id}">`;
-            html += `<img src="${props.images[0] ?? 'images/places/notfound.png'}" alt="" srcset="">`;
-            html += `<p>${props.name}</p>`;
+            html += `<img src="${props[6] || 'images/places/notfound.png'}" alt="" srcset="">`;
+            html += `<p>${props[1]}</p>`;
             html += '</button>';
             html += '</li>';
         })
@@ -562,7 +561,7 @@ const StreetviewControl = Control.extend({
 
                     const foundId = foundIds.sort((a, b) => a[0] - b[0])[0][1];
 
-                    $searchbarFormInput.value = placeDatabase[foundId]?.searchname ?? '';
+                    $searchbarFormInput.value = placeDatabase[foundId][2] || '';
 
                     setStreetViewMinimap(mouseX, mouseY);
                     showStreetView(foundId);
@@ -737,8 +736,8 @@ function getPlaceInfo(id: string, type?: PLACE_TYPE) {
     const entry = placeDatabase[id];
     const placeConfig = type ? PLACE_CONFIG[type] : undefined;
 
-    const name: string = entry.name;
-    const zoom: number = entry.zoom;
+    const name: string = entry[1];
+    const zoom: number = entry[3];
 
     const color = placeConfig?.color;
     const icon = placeConfig?.icon;
@@ -797,17 +796,17 @@ function showSidebar(id?: string) {
     const info = placeDatabase[id];
     const description: string = placeDatabaseDescriptions[id];
 
-    const region: string[] = info.region;
-    const mainPicture: string = info.mainPicture;
-    const link: string = info.link;
-    const images: string[] = info.images;
-    const knownAs: string[] = info.altname;
+    const region: string[] | 0 = info[5];
+    const mainPicture: string | 0 = info[6];
+    const link: string | 0 = info[8];
+    const images: string[] | 0 = info[7];
+    const knownAs: string[] | 0 = info[4];
 
-    const name = info.name;
+    const name = info[1];
 
     $sidebar.classList.remove('hidden');
     $sidebarName.innerText = name;
-    $searchbarFormInput.value = info.searchname;
+    $searchbarFormInput.value = info[2];
 
     changeTitle(name);
 
@@ -833,9 +832,9 @@ function showSidebar(id?: string) {
         $sidebarDataDescription.classList.add('hidden');
     }
 
-    $sidebarDataLearnMore.href = link;
+    $sidebarDataLearnMore.href = link || '';
 
-    if (images?.length) {
+    if (images) {
         $sidebarMedia.classList.remove('hidden');
         $sidebarMediaGallery.innerHTML = images.map((v) => `
         <a class="item" href="${v}" target="_blank">
@@ -847,7 +846,7 @@ function showSidebar(id?: string) {
         $sidebarMedia.classList.add('hidden');
     }
 
-    if (knownAs?.length) {
+    if (knownAs) {
         $sidebarKnownAs.classList.remove('hidden');
         $sidebarKnownAsList.innerHTML = knownAs.map((v) => `<li>${v}</li>`).join('');
     } else {
@@ -997,9 +996,6 @@ function refreshPlaceMarkers() {
     const width = innerWidth || body.clientWidth;
     const deviceZoomExtra = width < 800 ? 0.25 : 0;
 
-    console.log(map.getCenter());
-
-
     allPlaceMarkers.forEach((marker, id) => {
         // @ts-expect-error
         if (zoom >= marker.options.minZoom - deviceZoomExtra) {
@@ -1099,7 +1095,7 @@ const STYLE_BG: PathOptions = {
     color: '#8ad8ec',
 }
 
-let placeDatabase: Record<string, any> = {};
+let placeDatabase: Record<string, SerializedPlace> = {};
 let placeDatabaseDescriptions: Record<string, any> = {};
 
 function pointToLayer(geoJsonPoint: Feature<Point, any>, latlng: LatLng): Layer {
@@ -1193,48 +1189,59 @@ const layersOpts: Record<string, GeoJSONOptions | undefined> = {
     },
 }
 
-const layersPromises = Object.keys(layersOpts).map(async (layerName) => {
-    const retrieveFiles = async () => {
-        return await fetchAsJson(`geo/${layerName}`);
-    }
-    return [layerName, await retrieveFiles()] as const;
-})
+fetchAsJson('db').then((db: SerializedGeoJSON[]) => {
+    const featureTypes = [
+        'Polygon',
+        'MultiPolygon',
+        'Point',
+        'MultiPoint',
+        'LineString',
+        'MultiLineString',
+    ] as const;
+    const layers = db.reduce((acc, serializedFeatures) => {
+        const layer = serializedFeatures.pop() as string;
+        const features: Array<Feature> = (serializedFeatures as SerializedGeoJSONFeatures[]).map((feature) => {
+            const [type, coordinates, placeData, size, zoom] = feature;
+            const eventname = placeData ? placeData[0] : undefined;
+            let geometry!: Geometry;
+            let properties = {
+                eventname,
+                size,
+                zoom,
+                layer
+            }
 
-Promise.all(layersPromises).then((data) => Object.fromEntries(data)).then(async (data) => {
-    const alreadyAddedIds = new Set<string>();
+            if (eventname) {
+                placeDatabase[eventname] = placeData as SerializedPlace;
+            }
 
-    placeDatabase = await fetchAsJson('db');
-    placeDatabaseDescriptions = await fetchAsJson('db-descriptions');
+            if (layer === 'poly_lake' && eventname) {
+                properties.eventname = `Lake_${eventname}`
+            }
 
-    const layers: Record<string, GeoJSON<any, GeometryObject>> = {};
-    for (const key in data) {
-        const geojson = data[key];
+            if (featureTypes) {
+                geometry = {
+                    type: featureTypes[type - 1],
+                    coordinates
+                }
+            }
 
-        geojson.features.forEach((v: any) => {
-            v.properties = v.properties || {};
-            v.properties.layer = key;
-
-            if (key === 'poly_lake') {
-                if (v.properties.eventname) v.properties.eventname = `Lake_${v.properties.eventname}`
+            return {
+                type: 'Feature',
+                properties,
+                geometry
             }
         });
 
-        geojson.features = geojson.features.filter((v: any) => {
-            const id = v.properties.eventname;
+        const geojson: FeatureCollection = {
+            type: 'FeatureCollection',
+            features
+        }
 
-            if (!id) return true;
+        acc[layer] = new GeoJSON(geojson, layersOpts[layer]).addTo(map);
 
-            if (!alreadyAddedIds.has(id)) {
-                alreadyAddedIds.add(id);
-                return true;
-            }
-
-            return false;
-        });
-
-        const layer = new GeoJSON(geojson, layersOpts[key]).addTo(map);
-        layers[key] = layer;
-    }
+        return acc;
+    }, {} as Record<string, GeoJSON>)
 
     const bounds = layers.poly_ekkaia.getBounds();
     map.setMaxBounds(bounds);

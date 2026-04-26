@@ -2,7 +2,7 @@
 
 import Papa from 'papaparse';
 
-import { PUBLIC_PATH, DATA_PATH, RESOURCES_PATH, compressJSON, GEOJSON_PATH } from './common.js';
+import { PUBLIC_PATH, DATA_PATH, RESOURCES_PATH, compressJSON, GEOJSON_PATH, ROOT_PATH } from './common.js';
 
 import { existsSync, readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
@@ -10,7 +10,10 @@ import { addAll, createIndex } from 'slimsearch';
 import { readdir, readFile, writeFile } from 'fs/promises';
 
 
-const CSV_PATH = join(DATA_PATH, 'Location.csv');
+const CSV_PATH = join(RESOURCES_PATH, 'Location.csv');
+const DESCRIPTIONS_PATH = join(RESOURCES_PATH, 'descriptions.json');
+
+const descriptions = JSON.parse(readFileSync(DESCRIPTIONS_PATH, 'utf-8'));
 
 const IMAGE_DIR = 'images/places';
 const IMAGE_DIR_ABS = join(PUBLIC_PATH, IMAGE_DIR);
@@ -80,14 +83,124 @@ const searchIndex = createIndex({
 });
 addAll(searchIndex, Object.values(database));
 
-compressJSON(DATABASE_PATH, database);
+const IDs = Object.keys(database);
+
+// compressJSON(DATABASE_PATH, database);
 compressJSON(SEARCH_INDEX_PATH, searchIndex);
-writeFile(ID_LIST_PATH, Object.keys(database).join('\n'));
+writeFile(ID_LIST_PATH, IDs.join('\n'));
+
+const GEOJSONS_TO_LOAD = [
+    'poly_ekkaia',
+    'poly_bg',
+    'poly_outline',
+    'poly_moor',
+    'poly_highland',
+    'poly_forest',
+    'poly_mountainlow',
+    'poly_mountainhigh',
+    'poly_lake',
+    'line_river',
+    'line_road',
+    'point_bridge',
+    'point_place',
+    'point_mount',
+    'point_ford',
+    'point_castletower',
+    'point_city',
+    'point_waterfall',
+    'poly_region',
+]
+
+const serializedGeoJsonFiles = (await Promise.all(
+    GEOJSONS_TO_LOAD.map(async (name) => {
+        const fileName = name + '.geojson';
+        const path = join(GEOJSON_PATH, fileName);
+
+        /** @type {GeoJSON.GeoJSON} */
+        const geoJson = JSON.parse(await readFile(path, 'utf-8'));
+
+        if (geoJson.type !== 'FeatureCollection') return console.warn('GeoJSON is not a feature collection ', fileName, geoJson.type);
+
+        const alreadyAddedIds = new Set();
+        const serializedFeatures = geoJson.features.map((feature, i) => {
+            if (feature.type !== 'Feature') return console.warn('Not a feature in collection ', i, feature.type, fileName)
+
+            const serialized = [];
+
+            let place = database[feature.properties?.eventname]
+            let zoom = feature.properties.zoom || 1;
+
+            if (!feature.geometry) {
+                return console.warn('Feature without geometry ', i, feature, fileName)
+            } else {
+                switch (feature.geometry.type) {
+                    case 'Polygon':
+                        serialized.push(1);
+                        break;
+                    case 'MultiPolygon':
+                        serialized.push(2);
+                        break;
+                    case 'Point':
+                        serialized.push(3);
+                        break;
+                    case 'MultiPoint':
+                        serialized.push(4);
+                        break;
+                    case 'LineString':
+                        serialized.push(5);
+                        break;
+                    case 'MultiLineString':
+                        serialized.push(6);
+                        break;
+                    default:
+                        throw new Error("Unknown type " + feature.geometry.type);
+                }
+
+                if (feature.geometry.coordinates) {
+                    serialized.push(feature.geometry.coordinates)
+                } else {
+                    serialized.push(0);
+                }
+            }
+
+            if (place) {
+                place = { ...place };
+                const id = place.id;
+
+                if (alreadyAddedIds.has(id)) return console.warn('Duplicated place ID ', id)
+
+                alreadyAddedIds.add(id);
+
+                delete place.searchAltname;
+                delete place.searchRegion;
+
+                zoom = place.zoom
+
+                const placeData = Object.values(place).map((v) => Array.isArray(v) ? (v.length ? v : 0) : v || 0);
 
 
-readdir(GEOJSON_PATH).then((v) => v.forEach(async (fileName) => {
-    const path = join(GEOJSON_PATH, fileName);
-    const data = await readFile(path, 'utf-8');
 
-    compressJSON(join(DATA_PATH, 'geo/', fileName.replace('.geojson', '.bin')), data);
-}))
+                const description = descriptions[place.id];
+
+                if (description) {
+                    placeData.push(description);
+                } else {
+                    placeData.push(0);
+                }
+
+                serialized.push(placeData)
+            } else {
+                serialized.push(0)
+            }
+
+            serialized.push(feature.properties.size || 0)
+            serialized.push(zoom)
+
+            return serialized;
+        }).filter((v) => v);
+
+        return [...serializedFeatures, name];
+    })
+)).filter((v) => v);
+
+compressJSON(DATABASE_PATH, serializedGeoJsonFiles);
