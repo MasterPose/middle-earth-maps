@@ -305,7 +305,7 @@ function closeStreetView() {
     saveStreetView('');
 }
 
-$streetviewMinimap.addEventListener('click', (e) => {
+$streetviewMinimap.addEventListener('click', () => {
     closeStreetView();
     $streetviewMinimap.blur();
 });
@@ -387,7 +387,7 @@ $streetviewExploreButton.addEventListener('click', () => {
 const ZOOM_MAX = 22;
 const ZOOM_MIN = 15.58;
 
-let mapIsLoaded = false;
+// let mapIsLoaded = false;
 const map = new LeafletMap($app, {
     center: [0, 0],
     maxZoom: ZOOM_MAX,
@@ -403,7 +403,7 @@ const map = new LeafletMap($app, {
 });
 
 map.once('load', () => {
-    mapIsLoaded = true;
+    // mapIsLoaded = true;
 
     $sidebar.style.display = '';
     // $streetview.style.display = '';
