@@ -6,9 +6,14 @@ type ViteStripDepsOpts = {
 }
 
 export const viteStripDeps = ({ ignoreList = [] }: ViteStripDepsOpts): Plugin => {
+    let isProd = false;
     return {
         name: 'vite-strip-deps',
+        configResolved(config) {
+            isProd = config.isProduction
+        },
         transform(code, id, options) {
+            if (!isProd) return;
             if (ignoreList.findIndex((v) => id.endsWith(v)) < 0) return;
 
             const ast = this.parse(code)

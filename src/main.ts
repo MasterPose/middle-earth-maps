@@ -24,7 +24,9 @@ import {
     Marker,
     DivIcon,
     LatLngBounds,
-    GeoJSON
+    GeoJSON,
+    Canvas,
+    CRS
 } from './libs/leaflet.js';
 import { interact } from './libs/interact.js';
 import type { GeoJSONOptions, LatLngExpression, Layer, MarkerOptions, PathOptions, Polygon } from 'leaflet';
@@ -379,6 +381,7 @@ $streetviewExploreButton.addEventListener('click', () => toggleExploreMenu());
 const ZOOM_MAX = 22;
 const ZOOM_MIN = 15.58;
 
+let mapIsLoaded = false;
 const map = new LeafletMap($app, {
     center: [0, 0],
     maxZoom: ZOOM_MAX,
@@ -388,9 +391,14 @@ const map = new LeafletMap($app, {
     zoomControl: false,
     boxZoom: false,
     keyboard: false,
+    preferCanvas: true,
+    crs: CRS,
+    renderer: new Canvas(),
 });
 
 map.once('load', () => {
+    mapIsLoaded = true;
+
     $sidebar.style.display = '';
     // $streetview.style.display = '';
     $streetviewControl.style.display = '';
@@ -906,7 +914,7 @@ const PlaceMarker = Marker.extend({
             if (radius) {
                 regionLayer = featureProps.regionLayer = new Circle(coords, {
                     ...STYLE_TRANSPARENT,
-                    radius
+                    radius: radius / 100000
                 });
                 this.once('add', () => regionLayer!.addTo(map));
             }

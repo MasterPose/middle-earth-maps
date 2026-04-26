@@ -8,8 +8,12 @@ import {
     Circle,
     DivIcon,
     LatLngBounds,
-    GeoJSON
+    GeoJSON,
+    Canvas
 } from 'leaflet/src/Leaflet.js';
+import {
+    Simple as CRS
+} from 'leaflet/src/geo/crs/CRS.Simple.js'
 import { Leaflet_PointInPolygon } from './leaflet_pointinpolygon.js';
 
 import type * as Leaflet from 'leaflet';
@@ -27,5 +31,7 @@ export {
     Circle,
     DivIcon,
     LatLngBounds,
-    GeoJSON
+    GeoJSON,
+    Canvas,
+    CRS
 };

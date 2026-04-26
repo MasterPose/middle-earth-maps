@@ -38,7 +38,7 @@ export default {
     },
     plugins: [
         createHtmlPlugin({ minify: true }),
-        viteDetectDuplicatedDeps(),
+        // viteDetectDuplicatedDeps(),
         viteStripDeps({
             ignoreList: [
                 "node_modules/leaflet/src/layer/VideoOverlay.js",
@@ -48,9 +48,12 @@ export default {
                 "node_modules/leaflet/src/layer/tile/TileLayer.WMS.js",
                 "node_modules/leaflet/src/control/Control.Scale.js",
                 "node_modules/leaflet/src/control/Control.Layers.js",
-                "node_modules/leaflet/src/geo/crs/CRS.Simple.js",
-                "node_modules/leaflet/src/geo/projection/Projection.LonLat.js",
+                // "node_modules/leaflet/src/geo/crs/CRS.Earth.js", // Neccesary for LatLng calculations
+                "node_modules/leaflet/src/geo/crs/CRS.EPSG3395.js",
+                "node_modules/leaflet/src/geo/crs/CRS.EPSG3857.js",
+                "node_modules/leaflet/src/geo/crs/CRS.EPSG4326.js",
                 "node_modules/leaflet/src/geo/projection/Projection.Mercator.js",
+                "node_modules/leaflet/src/geo/projection/Projection.SphericalMercator.js",
                 "node_modules/leaflet/src/map/handler/Map.BoxZoom.js",
                 "node_modules/leaflet/src/map/handler/Map.Keyboard.js",
             ]
