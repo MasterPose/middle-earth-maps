@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 
 .~lock.*
+
+android/keystore.properties
+*.keystore
+*.jks
