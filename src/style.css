@@ -528,6 +528,13 @@ button#streetview-dummy {
     padding: 0;
 }
 
+@media (max-width: 500px) {
+    #streetview-minimap {
+        width: 150px;
+        height: 75px;
+    }
+}
+
 #streetview-minimap-image {
     width: 100%;
     border-radius: 8px;

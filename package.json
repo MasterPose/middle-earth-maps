@@ -4,12 +4,16 @@
     "scripts": {
         "dev": "vite",
         "build": "tsc && vite build",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "android": "cross-env VITE_CAPACITOR=1 npm run build && npx cap sync && npx cap run android"
     },
     "devDependencies": {
+        "@capacitor/assets": "^3.0.5",
+        "@capacitor/cli": "^8.3.1",
         "@types/dom-to-image": "^2.6.7",
         "@types/leaflet": "^1.9.21",
         "acorn-walk": "^8.3.5",
+        "cross-env": "^10.1.0",
         "papaparse": "^5.5.3",
         "playwright": "^1.58.2",
         "playwright-extra": "^4.3.6",
@@ -22,6 +26,9 @@
         "vite-plugin-singlefile-compression": "^2.4.0"
     },
     "dependencies": {
+        "@capacitor/android": "^8.3.1",
+        "@capacitor/app": "^8.1.0",
+        "@capacitor/core": "^8.3.1",
         "@interactjs/actions": "^1.10.27",
         "@interactjs/auto-start": "^1.10.27",
         "@interactjs/interact": "^1.10.27",

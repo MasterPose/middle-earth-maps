@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Middle-Earth Maps</string>
+    <string name="title_activity_main">Middle-Earth Maps</string>
+    <string name="package_name">dev.masterpose.lotr_maps</string>
+    <string name="custom_url_scheme">dev.masterpose.lotr_maps</string>
+</resources>
