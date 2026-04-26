@@ -1,27 +1,31 @@
+![Middle-Earth Maps App Logo](./resources/marketing/app-icon.png)
+
 # Middle-Earth Maps
 
-A Google Maps-inspired Middle-Earth interactive web app.
+Explore Tolkien's Middle-Earth in an interactive and familiar user-interface based on Google Maps.
 
-![](./public/middle-earth-maps.jpg)
+<div align="center">
 
-## Todo
+<img alt="Middle-Earth Maps animation showing the world and Street-View feature" width="520" src="./resources/marketing/promo-gif.gif">
 
-- [ ] Fill images preferrably from depections of Middle-Earth in other media, such as Videogames.
-- [ ] Add custom non-canonical data from games such as regions & places from the Mordor of the [Shadow of Mordor](https://en.wikipedia.org/wiki/Middle-earth:_Shadow_of_Mordor) series.
+</div>
+
+Middle-Earth Maps is fully open-source (under the [AGPLv3](./LICENSE)) and can be used online or offline downloading the Android app.
+
+**[Official Website](https://lotr.masterpose.dev/)**
+
+<p>
+  <a href="https://masterpose.itch.io/middle-earth-maps"><img height="50" src="./resources/marketing/badge-itch.svg"></a>
+  <a href="https://play.google.com/store/apps/details?id=dev.masterpose.lotr_maps"><img height="50" src="./resources/marketing/badge-googleplay.png"></a>
+  <a href="https://github.com/MasterPose/middle-earth-maps/releases"><img height="50" src="./resources/marketing/badge-github.png"></a>
+</p>
+
 
 ## Contribute
 
-You can help by adding images of places to `public/images/places/`:
+WIP: Currently reestructuring the project.
 
-1. You need to create a subfolder with the place id (Check the [ids.txt](./public/ids.txt)).
-2. Add a descriptive name to the image you attach.
-3. Use underscores instead of spaces for the name.
-4. Add a number prefix to the name, to control the order of which the images are shown.
-5. Don't edit `public/db.json`, this file is generated using `bin/generatePlaceDatabase.js`. You can run the script, but I will run it for you if you do a PR.
-
-Example: `public/images/places/DoorsOfDurin/2_LEGO_game_depiction.webp`.
-
-Ideally all images will be screenshots from Middle-Earth official media such as videogames.
+Still wanna hangout and discuss contributions? [Join our Discord](https://discord.com/invite/DczWDz2dH3).
 
 ## Credits & Attributions
 
