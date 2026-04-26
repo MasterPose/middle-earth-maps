@@ -6,7 +6,8 @@
         "build": "tsc && vite build",
         "preview": "vite preview",
         "android": "cross-env VITE_CAPACITOR=1 npm run build && npx cap sync android && npx cap run android",
-        "build:android": "cross-env VITE_CAPACITOR=1 npm run build && npx cap sync android && cd android/ && gradlew bundleRelease --stacktrace"
+        "build:aab": "cross-env VITE_CAPACITOR=1 npm run build && npx cap sync android && cd android/ && gradlew bundleRelease --stacktrace",
+        "build:apk": "cross-env VITE_CAPACITOR=1 npm run build && npx cap sync android && cd android/ && gradlew assembleRelease --stacktrace"
     },
     "devDependencies": {
         "@capacitor/assets": "^3.0.5",
