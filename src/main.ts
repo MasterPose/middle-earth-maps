@@ -31,6 +31,7 @@ import {
 } from './libs/leaflet.js';
 import { interact } from './libs/interact.js';
 import type { GeoJSONOptions, LatLngExpression, Layer, MarkerOptions, PathOptions, Polygon } from 'leaflet';
+import { fetchAsJson, fetchAsText } from './utils/data.js';
 
 const EMPTY_ARR: never[] = [];
 
@@ -689,8 +690,8 @@ function focusOnMarker(id?: string, sidebar: boolean = true) {
     if (sidebar) showSidebar(id);
 }
 
-fetch('search.json').then(async (data) => {
-    searchIndex = await loadJSONIndexAsync(await data.text(), {
+fetchAsText('search.json').then(async (data) => {
+    searchIndex = await loadJSONIndexAsync(data, {
         fields: ['name', 'searchAltname', 'searchRegion'],
         storeFields: ['name', 'region']
     });
@@ -1185,7 +1186,7 @@ const layersOpts: Record<string, GeoJSONOptions | undefined> = {
 
 const layersPromises = Object.keys(layersOpts).map(async (layerName) => {
     const retrieveFiles = async () => {
-        return await fetch(`data/${layerName}.geojson`).then((v) => v.text()).then((v) => JSON.parse(v));
+        return await fetchAsJson(`geo/${layerName}`);
     }
     return [layerName, await retrieveFiles()] as const;
 })
@@ -1193,9 +1194,8 @@ const layersPromises = Object.keys(layersOpts).map(async (layerName) => {
 Promise.all(layersPromises).then((data) => Object.fromEntries(data)).then(async (data) => {
     const alreadyAddedIds = new Set<string>();
 
-    placeDatabase = await fetch('db.json').then((v) => v.json());
-    placeDatabaseDescriptions = await fetch('db-descriptions.json').then((v) => v.json());
-
+    placeDatabase = await fetchAsJson('db');
+    placeDatabaseDescriptions = await fetchAsJson('db-descriptions');
 
     const layers: Record<string, GeoJSON<any, GeometryObject>> = {};
     for (const key in data) {

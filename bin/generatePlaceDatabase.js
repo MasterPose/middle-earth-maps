@@ -2,20 +2,22 @@
 
 import Papa from 'papaparse';
 
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
-import MiniSearch from 'minisearch';
-import { addAll, createIndex } from 'slimsearch';
+import { PUBLIC_PATH, DATA_PATH, RESOURCES_PATH, compressJSON, GEOJSON_PATH } from './common.js';
 
-const CSV_PATH = join(import.meta.dirname, '../src/data/Location.csv');
+import { existsSync, readdirSync, readFileSync } from 'fs';
+import { join } from 'path';
+import { addAll, createIndex } from 'slimsearch';
+import { readdir, readFile, writeFile } from 'fs/promises';
+
+
+const CSV_PATH = join(DATA_PATH, 'Location.csv');
 
 const IMAGE_DIR = 'images/places';
-const IMAGE_DIR_ABS = join(import.meta.dirname, '../public/', IMAGE_DIR);
+const IMAGE_DIR_ABS = join(PUBLIC_PATH, IMAGE_DIR);
 
-const LINE_TEXT_PATH = join(import.meta.dirname, '../public/data/line_text.geojson');
-const DATABASE_PATH = join(import.meta.dirname, '../public/db.json');
-const SEARCH_INDEX_PATH = join(import.meta.dirname, '../public/search.json');
-const ID_LIST_PATH = join(import.meta.dirname, '../public/ids.txt');
+const DATABASE_PATH = join(DATA_PATH, 'db.bin');
+const SEARCH_INDEX_PATH = join(DATA_PATH, 'search.bin');
+const ID_LIST_PATH = join(DATA_PATH, 'ids.txt');
 
 const locationCsvDB = Papa.parse(readFileSync(CSV_PATH, 'utf-8'), {
     encoding: 'utf-8',
@@ -28,7 +30,7 @@ const database = {};
     'line_text.geojson',
     'poly_region.geojson',
     'point_city.geojson'
-].map((v) => join(import.meta.dirname, '../public/data/', v))
+].map((v) => join(GEOJSON_PATH, v))
     .map((v) => readFileSync(v, 'utf-8'))
     .map((v) => JSON.parse(v))
     .forEach((v) => v.features.forEach((v) => database[v.properties.eventname] = {
@@ -78,6 +80,14 @@ const searchIndex = createIndex({
 });
 addAll(searchIndex, Object.values(database));
 
-writeFileSync(DATABASE_PATH, JSON.stringify(database));
-writeFileSync(ID_LIST_PATH, Object.keys(database).join('\n'));
-writeFileSync(SEARCH_INDEX_PATH, JSON.stringify(searchIndex));
+compressJSON(DATABASE_PATH, database);
+compressJSON(SEARCH_INDEX_PATH, searchIndex);
+writeFile(ID_LIST_PATH, Object.keys(database).join('\n'));
+
+
+readdir(GEOJSON_PATH).then((v) => v.forEach(async (fileName) => {
+    const path = join(GEOJSON_PATH, fileName);
+    const data = await readFile(path, 'utf-8');
+
+    compressJSON(join(DATA_PATH, 'geo/', fileName.replace('.geojson', '.bin')), data);
+}))

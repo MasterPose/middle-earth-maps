@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import { join } from 'path';
 
 import { chromium } from 'playwright-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
+import { compressJSON, DATA_PATH } from './common.js';
 
 const DATABASE_PATH = join(import.meta.dirname, '../public/db.json');
 const db = JSON.parse(readFileSync(DATABASE_PATH, 'utf-8'));
 
-const DATABASE_DESCRIPTIONS_PATH = join(import.meta.dirname, '../public/db-descriptions.json');
+const DATABASE_DESCRIPTIONS_PATH = join(DATA_PATH, 'db-descriptions.bin');
 const descriptions = {};
 
 chromium.use(StealthPlugin());
@@ -69,5 +70,5 @@ chromium.launch({
     }
     await browser.close();
 
-    writeFileSync(DATABASE_DESCRIPTIONS_PATH, JSON.stringify(descriptions));
+    compressJSON(DATABASE_DESCRIPTIONS_PATH, descriptions);
 });
