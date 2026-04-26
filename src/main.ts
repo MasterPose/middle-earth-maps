@@ -382,6 +382,7 @@ function toggleExploreMenu() {
 $streetviewExploreButton.addEventListener('click', () => {
     toggleExploreMenu();
     $streetviewExploreButton.blur();
+    map.dragging.enable(); // Mobile fix
 });
 
 const ZOOM_MAX = 22;
