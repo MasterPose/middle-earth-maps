@@ -675,6 +675,12 @@ button#streetview-dummy {
     width: 200px;
 }
 
+@media (max-width: 500px) {
+    .streetview-hotspot-popup {
+        font-size: 18px;
+    }
+}
+
 @keyframes streetview-hotspot-popup-temp-focus {
     0% {
         opacity: 0;

@@ -9,7 +9,8 @@ import {
     DivIcon,
     LatLngBounds,
     GeoJSON,
-    Canvas
+    Canvas,
+    Browser
 } from 'leaflet/src/Leaflet.js';
 import {
     Simple as CRS
@@ -33,5 +34,6 @@ export {
     LatLngBounds,
     GeoJSON,
     Canvas,
-    CRS
+    CRS,
+    Browser
 };

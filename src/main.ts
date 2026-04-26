@@ -26,7 +26,8 @@ import {
     LatLngBounds,
     GeoJSON,
     Canvas,
-    CRS
+    CRS,
+    Browser
 } from './libs/leaflet.js';
 import { interact } from './libs/interact.js';
 import type { GeoJSONOptions, LatLngExpression, Layer, MarkerOptions, PathOptions, Polygon } from 'leaflet';
@@ -182,9 +183,8 @@ const streetviewLastFOV = new Map<string, [number, number]>();
 
 const panellum = (window as any).pannellum.viewer($streetviewPanellum, {
     autoLoad: false,
-    showZoomCtrl: false,
-    showFullscreenCtrl: false,
-    hfov: 120,
+    showControls: false,
+    hfov: Browser.mobile ? 60 : 120,
     scenes: [...STREETVIEW_SCENES].reduce((obj: any, [id, opts]) => {
         obj[id] = {
             ...opts,
@@ -305,7 +305,10 @@ function closeStreetView() {
     saveStreetView('');
 }
 
-$streetviewMinimap.addEventListener('click', () => closeStreetView());
+$streetviewMinimap.addEventListener('click', (e) => {
+    closeStreetView();
+    $streetviewMinimap.blur();
+});
 
 $streetviewExploreList.addEventListener('click', (e) => {
     const id = (e.target as HTMLElement | undefined)?.dataset.streetviewId;
@@ -376,7 +379,10 @@ function toggleExploreMenu() {
     }
 }
 
-$streetviewExploreButton.addEventListener('click', () => toggleExploreMenu());
+$streetviewExploreButton.addEventListener('click', () => {
+    toggleExploreMenu();
+    $streetviewExploreButton.blur();
+});
 
 const ZOOM_MAX = 22;
 const ZOOM_MIN = 15.58;
@@ -476,6 +482,7 @@ const StreetviewControl = Control.extend({
             listeners: {
                 start: () => {
                     draggingStreetview = true;
+                    map.dragging.disable();
                     allPlaceMarkers.forEach((marker, id) => {
                         const props = marker.feature?.properties;
 
@@ -499,6 +506,7 @@ const StreetviewControl = Control.extend({
                 },
                 end: (event: Event & { client: { x: number, y: number } }) => {
                     setTimeout(() => draggingStreetview = false, 0)
+                    map.dragging.enable();
 
                     $streetviewDummyImage.style.position = '';
                     $streetviewDummyImage.style.transform = ''
@@ -563,6 +571,7 @@ const StreetviewControl = Control.extend({
 
         // Re-enable dragging when user's cursor leaves the element
         div.addEventListener('mouseout', () => map.dragging.enable());
+        div.addEventListener('blur', () => map.dragging.enable());
 
         div.addEventListener('click', (e) => e.stopPropagation())
 
