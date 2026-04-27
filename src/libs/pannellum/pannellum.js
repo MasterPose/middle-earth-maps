@@ -53,6 +53,7 @@ window.pannellum = (function (window, document, undefined) {
             error = false,
             isTimedOut = false,
             listenersAdded = false,
+            /** @type {HTMLImageElement} */
             panoImage,
             prevTime,
             speed = { 'yaw': 0, 'pitch': 0, 'hfov': 0 },
@@ -379,26 +380,13 @@ window.pannellum = (function (window, document, undefined) {
                 if (config.dynamic !== true) {
                     // Still image
                     p = absoluteURL(config.panorama) ? config.panorama : p + config.panorama;
+                    panoImage.src = p;
 
                     panoImage.onload = function () {
-                        window.URL.revokeObjectURL(this.src);  // Clean up
                         onImageLoad();
                     };
 
-                    var xhr = new XMLHttpRequest();
-                    xhr.onloadend = function () {
-                        if (xhr.status != 200) {
-                            // Display error if image can't be loaded
-                            var a = document.createElement('a');
-                            a.href = sanitizeURL(p, true);
-                            a.textContent = a.href;
-                            anError(config.strings.fileAccessError.replace('%s', a.outerHTML));
-                        }
-                        var img = this.response;
-                        parseGPanoXMP(img);
-                        infoDisplay.load.msg.innerHTML = '';
-                    };
-                    xhr.onprogress = function (e) {
+                    panoImage.onprogress = function (e) {
                         if (e.lengthComputable) {
                             // Display progress
                             var percent = e.loaded / e.total * 100;
@@ -423,17 +411,7 @@ window.pannellum = (function (window, document, undefined) {
                             infoDisplay.load.lbox.style.display = 'block';
                             infoDisplay.load.lbar.style.display = 'none';
                         }
-                    };
-                    try {
-                        xhr.open('GET', p, true);
-                    } catch (e) {
-                        // Malformed URL
-                        anError(config.strings.malformedURLError);
                     }
-                    xhr.responseType = 'blob';
-                    xhr.setRequestHeader('Accept', 'image/*,*/*;q=0.9');
-                    xhr.withCredentials = config.crossOrigin === 'use-credentials';
-                    xhr.send();
                 }
             }
 
@@ -513,95 +491,6 @@ window.pannellum = (function (window, document, undefined) {
             renderInit();
             setHfov(config.hfov); // possibly adapt hfov after configuration and canvas is complete; prevents empty space on top or bottom by zomming out too much
             setTimeout(function () { isTimedOut = true; }, 500);
-        }
-
-        /**
-         * Parses Google Photo Sphere XMP Metadata.
-         * https://developers.google.com/photo-sphere/metadata/
-         * @private
-         * @param {Image} image - Image to read XMP metadata from.
-         */
-        function parseGPanoXMP(image) {
-            var reader = new FileReader();
-            reader.addEventListener('loadend', function () {
-                var img = reader.result;
-
-                // This awful browser specific test exists because iOS 8 does not work
-                // with non-progressive encoded JPEGs.
-                if (navigator.userAgent.toLowerCase().match(/(iphone|ipod|ipad).* os 8_/)) {
-                    var flagIndex = img.indexOf('\xff\xc2');
-                    if (flagIndex < 0 || flagIndex > 65536)
-                        anError(config.strings.iOS8WebGLError);
-                }
-
-                var start = img.indexOf('<x:xmpmeta');
-                if (start > -1 && config.ignoreGPanoXMP !== true) {
-                    var xmpData = img.substring(start, img.indexOf('</x:xmpmeta>') + 12);
-
-                    // Extract the requested tag from the XMP data
-                    var getTag = function (tag) {
-                        var result;
-                        if (xmpData.indexOf(tag + '="') >= 0) {
-                            result = xmpData.substring(xmpData.indexOf(tag + '="') + tag.length + 2);
-                            result = result.substring(0, result.indexOf('"'));
-                        } else if (xmpData.indexOf(tag + '>') >= 0) {
-                            result = xmpData.substring(xmpData.indexOf(tag + '>') + tag.length + 1);
-                            result = result.substring(0, result.indexOf('<'));
-                        }
-                        if (result !== undefined) {
-                            return Number(result);
-                        }
-                        return null;
-                    };
-
-                    // Relevant XMP data
-                    var xmp = {
-                        fullWidth: getTag('GPano:FullPanoWidthPixels'),
-                        croppedWidth: getTag('GPano:CroppedAreaImageWidthPixels'),
-                        fullHeight: getTag('GPano:FullPanoHeightPixels'),
-                        croppedHeight: getTag('GPano:CroppedAreaImageHeightPixels'),
-                        topPixels: getTag('GPano:CroppedAreaTopPixels'),
-                        heading: getTag('GPano:PoseHeadingDegrees'),
-                        horizonPitch: getTag('GPano:PosePitchDegrees'),
-                        horizonRoll: getTag('GPano:PoseRollDegrees')
-                    };
-
-                    if (xmp.fullWidth !== null && xmp.croppedWidth !== null &&
-                        xmp.fullHeight !== null && xmp.croppedHeight !== null &&
-                        xmp.topPixels !== null) {
-
-                        // Set up viewer using GPano XMP data
-                        if (specifiedPhotoSphereExcludes.indexOf('haov') < 0)
-                            config.haov = xmp.croppedWidth / xmp.fullWidth * 360;
-                        if (specifiedPhotoSphereExcludes.indexOf('vaov') < 0)
-                            config.vaov = xmp.croppedHeight / xmp.fullHeight * 180;
-                        if (specifiedPhotoSphereExcludes.indexOf('vOffset') < 0)
-                            config.vOffset = ((xmp.topPixels + xmp.croppedHeight / 2) / xmp.fullHeight - 0.5) * -180;
-                        if (xmp.heading !== null && specifiedPhotoSphereExcludes.indexOf('northOffset') < 0) {
-                            // TODO: make sure this works correctly for partial panoramas
-                            config.northOffset = xmp.heading;
-                            if (config.compass !== false) {
-                                config.compass = true;
-                            }
-                        }
-                        if (xmp.horizonPitch !== null && xmp.horizonRoll !== null) {
-                            if (specifiedPhotoSphereExcludes.indexOf('horizonPitch') < 0)
-                                config.horizonPitch = xmp.horizonPitch;
-                            if (specifiedPhotoSphereExcludes.indexOf('horizonRoll') < 0)
-                                config.horizonRoll = xmp.horizonRoll;
-                        }
-
-                        // TODO: add support for initial view settings
-                    }
-                }
-
-                // Load panorama
-                panoImage.src = window.URL.createObjectURL(image);
-            });
-            if (reader.readAsBinaryString !== undefined)
-                reader.readAsBinaryString(image);
-            else
-                reader.readAsText(image);
         }
 
         /**
@@ -1621,10 +1510,6 @@ window.pannellum = (function (window, document, undefined) {
                 if (config.backgroundColor !== undefined)
                     params.backgroundColor = config.backgroundColor;
                 renderer.init(panoImage, config.type, config.dynamic, config.haov * Math.PI / 180, config.vaov * Math.PI / 180, config.vOffset * Math.PI / 180, renderInitCallback, params);
-                if (config.dynamic !== true) {
-                    // Allow image to be garbage collected
-                    panoImage = undefined;
-                }
             } catch (event) {
                 // Panorama not loaded
 

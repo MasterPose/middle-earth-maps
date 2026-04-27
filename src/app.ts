@@ -181,6 +181,7 @@ const STREETVIEW_SCENES = new Map<string, Record<string, any>>([
 ]);
 const streetviewLastFOV = new Map<string, [number, number]>();
 
+const getPanoramaUrl = (id: string) => `./images/panoramas/${id}.webp`;
 const panellum = (window as any).pannellum.viewer($streetviewPanellum, {
     autoLoad: true,
     showControls: false,
@@ -188,7 +189,7 @@ const panellum = (window as any).pannellum.viewer($streetviewPanellum, {
     scenes: [...STREETVIEW_SCENES].reduce((obj: any, [id, opts]) => {
         obj[id] = {
             ...opts,
-            panorama: `./images/panoramas/${id}.webp`,
+            panorama: getPanoramaUrl(id),
             type: "equirectangular",
         };
 
@@ -469,6 +470,7 @@ function setStreetViewMinimap(containerX: number, containerY: number) {
 }
 
 let draggingStreetview = false;
+const precacheStreetviewImages = new Set<string>();
 const StreetviewControl = Control.extend({
     onAdd: function () {
         const div = DomUtil.create('div');
@@ -490,7 +492,13 @@ const StreetviewControl = Control.extend({
 
                         if (!props) return;
 
+                        if (!map.getBounds().contains(marker.getLatLng())) return;
+
                         if (!STREETVIEW_SCENES.has(id)) return;
+
+                        if (!precacheStreetviewImages.has(id)) {
+                            setTimeout(() => precacheStreetviewImages.add(new Image().src = getPanoramaUrl(id)), 0)
+                        }
 
                         (props.regionLayer as Polygon | undefined)?.setStyle(STYLE_REGION_STREETVIEW);
                     })
