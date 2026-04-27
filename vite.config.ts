@@ -8,6 +8,7 @@ export default {
     root: "./src",
     publicDir: '../public',
     build: {
+        assetsInlineLimit: 0,
         modulePreload: false,
         outDir: '../dist',
         emptyOutDir: true,
@@ -58,7 +59,10 @@ export default {
                 "node_modules/leaflet/src/map/handler/Map.Keyboard.js",
             ]
         }),
-        viteSingleFileCompression(),
+        viteSingleFileCompression({
+            tryInlineHtmlPublicIcon: false,
+            tryInlineHtmlAssets: false,
+        }),
     ],
 } satisfies UserConfig
 

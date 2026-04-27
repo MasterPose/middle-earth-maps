@@ -1,4 +1,4 @@
-@import 'leaflet/dist/leaflet.css';
+@import './libs/leaflet.css';
 
 * {
     scrollbar-width: thin;
@@ -519,7 +519,7 @@ button#streetview-dummy {
 #streetview-minimap {
     position: relative;
     border: 2px #fff solid;
-    background-color: #fff;
+    background-color: #d0f6e0;
     border-radius: 8px;
     cursor: pointer;
     overflow: hidden;
@@ -586,6 +586,10 @@ button#streetview-dummy {
 
 .streetview-opened #streetview-explore {
     padding-bottom: 10px;
+}
+
+.making-minimap .leaflet-right {
+    display: none;
 }
 
 #streetview-explore ul {
@@ -669,6 +673,7 @@ button#streetview-dummy {
 }
 
 .streetview-hotspot-popup {
+    user-select: none;
     position: absolute;
     color: #fff;
     font-family: 'Google Sans';

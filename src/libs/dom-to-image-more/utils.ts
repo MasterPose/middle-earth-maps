@@ -1,6 +1,7 @@
 import { raf } from "../../utils/timing";
 import { $createNS, body, dom } from "../../utils/dom";
 import { opts } from "./options";
+import { pow, random } from "../../utils/math";
 
 let uid_index = 0;
 
@@ -131,7 +132,7 @@ export function uid() {
 
     function fourRandomChars() {
         /* see https://stackoverflow.com/a/6248722/2519373 */
-        return `0000${((Math.random() * Math.pow(36, 4)) << 0).toString(
+        return `0000${((random() * pow(36, 4)) << 0).toString(
             36
         )}`.slice(-4);
     }

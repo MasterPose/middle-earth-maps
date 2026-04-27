@@ -1,7 +1,7 @@
 import './style.css'
 
 import { $, $create, body } from './utils/dom.js';
-import { clampYaw, max, min, round } from './utils/math.js';
+import { clampYaw, max, min, round, sqrt } from './utils/math.js';
 import { raf } from './utils/timing.js';
 
 import {
@@ -10,7 +10,7 @@ import {
     type SearchIndex,
 } from 'slimsearch'
 
-import './libs/pannellum.js';
+import * as pannellum from './libs/pannellum.js';
 import { toBlob } from './libs/dom-to-image-more.js';
 import {
     Control,
@@ -182,7 +182,7 @@ const STREETVIEW_SCENES = new Map<string, Record<string, any>>([
 const streetviewLastFOV = new Map<string, [number, number]>();
 
 const getPanoramaUrl = (id: string) => `./images/panoramas/${id}.webp`;
-const panellum = (window as any).pannellum.viewer($streetviewPanellum, {
+pannellum.viewer($streetviewPanellum, {
     autoLoad: true,
     showControls: false,
     hfov: Browser.mobile ? 60 : 120,
@@ -219,13 +219,13 @@ function startDraggingPanellum() {
 }
 
 function updateDraggingPanellum() {
-    const yaw = panellum.getYaw();
-    const pitch = panellum.getPitch();
+    const yaw = pannellum.getYaw();
+    const pitch = pannellum.getPitch();
 
-    const hotspots: Array<{ pitch: number, yaw: number, popupContainer: HTMLDivElement | undefined }> = STREETVIEW_SCENES.get(panellum.getScene())?.hotSpots ?? EMPTY_ARR;
+    const hotspots: Array<{ pitch: number, yaw: number, popupContainer: HTMLDivElement | undefined }> = STREETVIEW_SCENES.get(pannellum.getScene())?.hotSpots ?? EMPTY_ARR;
     hotspots.forEach((hotsPot) => {
         if (hotsPot.popupContainer) {
-            const dist = Math.sqrt((hotsPot.yaw - yaw) ** 2 + (hotsPot.pitch - pitch) ** 2);
+            const dist = sqrt((hotsPot.yaw - yaw) ** 2 + (hotsPot.pitch - pitch) ** 2);
             const hasFocus = hotsPot.popupContainer.classList.contains('temp-focus');
 
             if (dist < 20 && !hasFocus) {
@@ -247,19 +247,19 @@ function stopDraggingPanellum() {
     draggingPanellum = false;
 }
 
-panellum.on('mousedown', () => startDraggingPanellum());
-panellum.on('touchstart', () => startDraggingPanellum());
+pannellum.on('mousedown', () => startDraggingPanellum());
+pannellum.on('touchstart', () => startDraggingPanellum());
 
-panellum.on('mouseup', () => stopDraggingPanellum());
-panellum.on('touchend', () => stopDraggingPanellum());
+pannellum.on('mouseup', () => stopDraggingPanellum());
+pannellum.on('touchend', () => stopDraggingPanellum());
 
-panellum.on('animatefinished', () => updateDraggingPanellum());
-panellum.on('load', () => {
+pannellum.on('animatefinished', () => updateDraggingPanellum());
+pannellum.on('load', () => {
     if (showingStreetView && streetviewLastFOV.has(showingStreetView)) {
         const [yaw, pitch] = streetviewLastFOV.get(showingStreetView)!;
 
-        panellum.setYaw(yaw, false);
-        panellum.setPitch(pitch, false);
+        pannellum.setYaw(yaw, false);
+        pannellum.setPitch(pitch, false);
     }
 })
 
@@ -279,7 +279,7 @@ function showStreetView(id: string) {
     $streetviewMinimap.style.marginBottom = '';
     $streetview.style.display = '';
     $streetviewDummy.style.display = 'none';
-    panellum.loadScene(id);
+    pannellum.loadScene(id);
     setTimeout(() => body.classList.add('streetview-opened'), 0);
     showingStreetView = id;
     saveStreetView(id);
@@ -441,11 +441,13 @@ function layerContainsPoint(layer: any, latLng: LatLngExpression) {
         || layer.getBounds().contains(latLng);
 }
 
+let makingMinimapPromise: Promise<void> | undefined;
 function setStreetViewMinimap(containerX: number, containerY: number) {
-    $streetviewMinimapImage.src = '';
+    const oldSrc = $streetviewMinimapImage.src;
+    if (oldSrc) setTimeout(() => URL.revokeObjectURL(oldSrc), 1000);
 
-    toBlob(map.getContainer(), {
-        quality: 0.7,
+    body.classList.add('making-minimap');
+    const promise = makingMinimapPromise = toBlob(map.getContainer(), {
         skipFonts: true,
         width: 200,
         height: 100,
@@ -459,13 +461,19 @@ function setStreetViewMinimap(containerX: number, containerY: number) {
             return clone;
         },
         filter(domNode: HTMLElement) {
-            return !domNode.classList?.contains('leaflet-control-container')
+            if (domNode.tagName === 'DIV') {
+                return domNode.classList.contains('leaflet-map-pane') || domNode.classList.contains('leaflet-overlay-pane')
+            }
+
+            return domNode.tagName === 'CANVAS';
         },
     }).then((v: Blob) => {
+        if (promise !== makingMinimapPromise) return;
         if (!v) return;
 
         const url = URL.createObjectURL(v)
         $streetviewMinimapImage.src = url;
+        body.classList.remove('making-minimap');
     }).catch(console.error);
 }
 

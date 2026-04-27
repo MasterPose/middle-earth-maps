@@ -1,3 +1,12 @@
-import './pannellum/libpannellum.js';
-import './pannellum/pannellum.js';
+export {
+    viewer,
+    on,
+    addScene,
+    getYaw,
+    getPitch,
+    setYaw,
+    setPitch,
+    loadScene,
+    getScene
+} from './pannellum/viewer';
 import './pannellum/pannellum.css';
