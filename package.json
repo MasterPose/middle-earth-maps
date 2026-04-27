@@ -36,7 +36,6 @@
         "@interactjs/interact": "^1.10.27",
         "@interactjs/modifiers": "^1.10.27",
         "leaflet": "^1.9.4",
-        "pannellum": "^2.5.7",
         "slimsearch": "^2.3.0"
     }
 }
