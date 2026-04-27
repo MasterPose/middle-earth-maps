@@ -8,7 +8,7 @@ export default {
     root: "./src",
     publicDir: '../public',
     build: {
-        assetsInlineLimit: 0,
+        // assetsInlineLimit: 0,
         modulePreload: false,
         outDir: '../dist',
         emptyOutDir: true,
@@ -60,8 +60,8 @@ export default {
             ]
         }),
         viteSingleFileCompression({
-            tryInlineHtmlPublicIcon: false,
-            tryInlineHtmlAssets: false,
+            // tryInlineHtmlPublicIcon: false,
+            // tryInlineHtmlAssets: true,
         }),
     ],
 } satisfies UserConfig
